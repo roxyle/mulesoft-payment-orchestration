@@ -1,47 +1,23 @@
-# ------------------------------------------------------------------------------ #
-# Java defaults (https://github.com/github/gitignore/blob/master/Java.gitignore) #
-# ------------------------------------------------------------------------------ #
+# Anypoint Studio
+.mule/
+.metadata/
+.recommenders/
+target/
+*.log
 *.class
 
-# Package Files #
-*.jar
-*.war
-*.ear
+# Maven
+.mvn/
 
-# ------------------------------------------------------------------------------------------- #
-# Eclipse-specific (https://github.com/github/gitignore/blob/master/Global/Eclipse.gitignore) #
-# ------------------------------------------------------------------------------------------- #
-*.pydevproject
-.metadata
-bin/**
-tmp/**
-tmp/**/*
-*.tmp
-*.bak
-*.swp
-*~.nib
-local.properties
+# IDE
 .settings/
-.loadpath
-.project
 .classpath
+.project
 
-# External tool builders
-.externalToolBuilders/
-
-# Locally stored "Eclipse launch configurations"
-*.launch
-
-# CDT-specific
-.cproject
-
-# PDT-specific
-.buildpath
-
-# --------------- #
-# Studio-specific #
-# --------------- #
-target/
-.mule/
+# OS
 .DS_Store
-velocity.log
+Thumbs.db
+
+# Credentials (IMPORTANTE)
+*-credentials.properties
+config-local.yaml
