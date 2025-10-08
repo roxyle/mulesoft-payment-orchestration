@@ -1,0 +1,17 @@
+# Database Configuration
+db:
+  host: "localhost"
+  port: "8889"
+  database: "payment_system"
+  user: "root"
+  password: "root"
+
+# Payment Gateway Mock
+payment:
+  gateway:
+    url: "https://httpstat.us/200"
+    timeout: 5000
+
+# API Configuration
+api:
+  port: 8081
