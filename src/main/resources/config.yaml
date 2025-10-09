@@ -10,8 +10,8 @@ db:
 payment:
   gateway:
     url: "https://httpstat.us/200"
-    timeout: 5000
+    timeout: "5000"
 
 # API Configuration
 api:
-  port: 8081
+  port: "8081"

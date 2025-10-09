@@ -1,5 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd"></mule>
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="eafaf6d3-94a6-4d21-8348-a7c6203b24fb" file="config.yaml" />
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="2b1d8a5e-d6c5-421b-9331-3837edb8e027" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.password}" database="${db.database}" />
+	</db:config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="20d9280d-35f8-4570-a462-4bed50e74b78" >
+		<http:listener-connection host="0.0.0.0" port="${api.port}" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_Payment_Gateway" doc:name="HTTP Request configuration" doc:id="6eb398fb-809e-43e1-b2e1-44bd1a2b56b3" responseTimeout="${payment.gateway.timeout}">
+    	<http:request-connection protocol="HTTPS" host="httpstat.us" port="443" />
+	</http:request-config>
+	<flow name="mulesoft-payment-orchestrationFlow" doc:id="1f5e385c-f963-4098-890f-45a3d40d178c" >
+		<http:listener doc:name="POST /orders" doc:id="408bcc5d-7423-448f-ac77-7f42d8dcd168" config-ref="HTTP_Listener_config" path="/orders"/>
+		<logger level="INFO" doc:name="Log Request" doc:id="1629704e-0937-49b4-910c-a342f2080a0f" message="Incoming order request: #[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="20361ae0-bd9a-492c-bd2b-764a2dd68f1b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Flow configurato con successo",
+	timestamp: now(),
+	receivedPayload: payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="mulesoft-payment-orchestrationFlow1" doc:id="9257926d-403f-4990-b08b-8e038be8c6ad" >
+		<http:listener doc:name="GET /test-db" doc:id="468077f1-1ddd-4775-b810-c2e3362b5195" config-ref="HTTP_Listener_config" path="/test-db"/>
+		<db:select doc:name="Test DB Connection" doc:id="29aa7d7d-5e9f-427d-b102-aba59a82b4f8" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT 1 as test, NOW() as timestamp]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="cdaf21d9-db5e-4c6b-96e9-83985fd0c883" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "db connection successful",
+	result: payload
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
