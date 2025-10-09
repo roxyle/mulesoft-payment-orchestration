@@ -104,7 +104,7 @@ Client Request
 
 ### Database Setup
 
-```sql
+``sql
 
 -- Run in phpMyAdmin
 
