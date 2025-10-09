@@ -1,4 +1,4 @@
-\# Payment Orchestration System
+# Payment Orchestration System
 
 
 
@@ -6,31 +6,31 @@ Enterprise-grade payment processing system built with MuleSoft, implementing com
 
 
 
-\## Business Problem
+## Business Problem
 
 
 
 E-commerce platforms need to process payments reliably across distributed systems (order management, payment gateway, inventory). Network failures and retries can cause:
 
-\- Double charging customers
+- Double charging customers
 
-\- Inconsistent order states
+- Inconsistent order states
 
-\- Lost transactions
+- Lost transactions
 
 
 
 This system solves these problems through:
 
-\- \*\*Compensation Logic\*\*: Automatic rollback of partial transactions
+- **Compensation Logic**: Automatic rollback of partial transactions
 
-\- \*\*Idempotency\*\*: Safe retry handling preventing duplicates
+- **Idempotency**: Safe retry handling preventing duplicates
 
-\- \*\*Correlation IDs\*\*: End-to-end traceability
+- **Correlation IDs**: End-to-end traceability
 
 
 
-\## Architecture
+## Architecture
 
 
 
@@ -38,83 +38,83 @@ Client Request
 
 &nbsp;	↓
 
-\[API Layer - MuleSoft]
+[API Layer - MuleSoft]
 
 &nbsp;	↓
 
-\[Idempotency Check]
+[Idempotency Check]
 
 &nbsp;	↓
 
-\[Order Creation - MySQL]
+[Order Creation - MySQL]
 
 &nbsp;	↓
 
-\[Payment Gateway Call]
+[Payment Gateway Call]
 
 &nbsp;	↓ (success)
 
-\[Order Confirmation]
+[Order Confirmation]
 
 &nbsp;	↓ (failure)
 
-\[Compensation: Mark Failed]
+[Compensation: Mark Failed]
 
 
 
-\## Tech Stack
+## Tech Stack
 
 
 
-\- \*\*Integration\*\*: MuleSoft Anypoint Platform 4.9.9 EE
+- **Integration**: MuleSoft Anypoint Platform 4.9.9 EE
 
-\- \*\*Database\*\*: MySQL 8.0 (via MAMP)
+- **Database**: MySQL 8.0 (via MAMP)
 
-\- \*\*Patterns\*\*: Saga/Compensation, Idempotency, Correlation IDs
+- **Patterns**: Saga/Compensation, Idempotency, Correlation IDs
 
-\- \*\*API Design\*\*: REST, JSON
-
-
-
-\## Database Schema
+- **API Design**: REST, JSON
 
 
 
-\*\*orders\*\*: id, customer\_id, amount, status, correlation\_id, timestamps  
-
-\*\*payments\*\*: id, order\_id, transaction\_id, status, amount  
-
-\*\*idempotency\_log\*\*: id, idempotency\_key, order\_id, response\_payload, expires\_at
+## Database Schema
 
 
 
-\## Quick Start
+**orders**: id, customer_id, amount, status, correlation_id, timestamps  
+
+**payments**: id, order_id, transaction_id, status, amount  
+
+**idempotency_log**: id, idempotency_key, order_id, response_payload, expires_at
 
 
 
-\### Prerequisites
-
-\- Anypoint Studio 7.x
-
-\- MySQL 8.0+ (MAMP)
-
-\- Java JDK 8 or 11
+## Quick Start
 
 
 
-\### Database Setup
+### Prerequisites
+
+- Anypoint Studio 7.x
+
+- MySQL 8.0+ (MAMP)
+
+- Java JDK 8 or 11
+
+
+
+### Database Setup
 
 ```sql
 
 -- Run in phpMyAdmin
 
-CREATE DATABASE payment\_system;
+CREATE DATABASE payment_system;
 
 -- Import schema from /docs/schema.sql
 
 
 
-\### Application Configuration
+### Application Configuration
 
 
 
@@ -128,25 +128,25 @@ API available at http://localhost:8081
 
 
 
-\### Implementation Status
+### Implementation Status
 
 
 
-&nbsp;- \[x] Database schema
+&nbsp;- [x] Database schema
 
- - \[x]Project structure
+ - [x]Project structure
 
- - \[x] Configuration files
+ - [x] Configuration files
 
- - \[ ] Database connector configuration
+ - [ ] Database connector configuration
 
- - \[ ] Main orchestration flow
+ - [ ] Main orchestration flow
 
- - \[ ] Error handling and compensation
+ - [ ] Error handling and compensation
 
- - \[ ] Idempotency implementation
+ - [ ] Idempotency implementation
 
- - \[ ] Testing suite
+ - [ ] Testing suite
 
 ### API Endpoints
 
@@ -154,7 +154,7 @@ POST /orders - Create new order with payment processing
 
 GET /orders/{id} - Retrieve order details
 
-\### Learning Objectives
+### Learning Objectives
 
 This project demonstrates:
 
@@ -170,7 +170,7 @@ Logging and observability best practices
 
 
 
-\### License
+### License
 
 MIT License
 
