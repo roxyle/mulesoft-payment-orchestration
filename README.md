@@ -138,7 +138,11 @@ API available at http://localhost:8081
 
  - [x] Configuration files
 
- - [ ] Database connector configuration
+ - [x] Database connector configuration -ok
+
+ - [x] HTTP listener and request configs
+  
+ - [x] Basic flow test -ok
 
  - [ ] Main orchestration flow
 
