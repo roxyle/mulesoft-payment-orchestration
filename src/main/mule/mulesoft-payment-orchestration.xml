@@ -54,6 +54,65 @@ output application/json
 			</ee:message>
 		</ee:transform>
 	</flow>
+	<flow name="get-order-detail" doc:id="e636c44e-b3b6-4198-a260-c879427dd89c" >
+		<http:listener doc:name="GET /orders/{orderId}" doc:id="aff341e1-ba53-449f-a939-6eb44612cb82" config-ref="HTTP_Listener_config" path="/orders/{orderId}"/>
+		<db:select doc:name="Select Get Order Details" doc:id="2a9ba763-1d4e-4be1-acc3-3b52e4d447c9" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT 
+    o.id as orderId,
+    o.customer_id as customerId,
+    o.amount,
+    o.status,
+    o.correlation_id as correlationId,
+    o.created_at as createdAt,
+    o.updated_at as updatedAt,
+    p.transaction_id as transactionId,
+    p.status as paymentStatus
+FROM orders o
+LEFT JOIN payments p ON o.id = p.order_id
+WHERE o.id = :orderId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+    orderId: attributes.uriParams.orderId
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="dad93e85-dd9c-4cc6-822b-c536f3fcb62a" >
+			<when expression="#[sizeOf(payload) &gt; 0]">
+				<ee:transform doc:name="Transform Message" doc:id="63343f1b-ad30-4354-ab78-2c9254c73215" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    order_id: payload[0].orderId,
+    customer_id: payload[0].customerId,
+    amount: payload[0].amount,
+    status: payload[0].status,
+    correlation_id: payload[0].correlationId,
+    transaction_id: payload[0].transactionId,
+    payment_status: payload[0].paymentStatus,
+    created_at: payload[0].createdAt,
+    updated_at: payload[0].updatedAt
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="f05ace5e-3594-4015-9c5b-035078b1d77a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    error: "Order not found",
+    order_id: attributes.uriParams.orderId
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
 	<sub-flow name="check-idempotency" doc:id="e2326fa0-f648-41b2-9118-df13b63ec373" >
 		<set-variable value="#[attributes.headers.'idempotency' default uuid()&#10;//Legge header Idempotency-Key dalla richiesta. Se manca, genera UUID automaticamente]" doc:name="Extract Idempotency Key" doc:id="7a01b946-a361-4554-b70d-0a9a438b911f" variableName="idempotencyKey"/>
 		<db:select doc:name="Check Idempotency Log" doc:id="ac7dc49b-32ce-46b6-b4eb-28e15862ce17" config-ref="Database_Config">
