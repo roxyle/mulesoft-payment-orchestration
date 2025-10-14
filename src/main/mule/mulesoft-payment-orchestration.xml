@@ -16,23 +16,28 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	<http:request-config name="HTTP_Request_Payment_Gateway" doc:name="HTTP Request configuration" doc:id="6eb398fb-809e-43e1-b2e1-44bd1a2b56b3" responseTimeout="${payment.gateway.timeout}">
     	<http:request-connection protocol="HTTPS" host="httpstat.us" port="443" />
 	</http:request-config>
-	<flow name="mulesoft-payment-orchestrationFlow" doc:id="1f5e385c-f963-4098-890f-45a3d40d178c" >
+	<http:request-config name="HTTP_Request_Mock_Payment" doc:name="HTTP Request configuration" doc:id="612f8158-944d-414e-9198-b1bb82b9db64" responseTimeout="5000">
+    	<http:request-connection protocol="HTTP" host="localhost" port="8081" />
+	</http:request-config>
+	<flow name="post-orders" doc:id="1f5e385c-f963-4098-890f-45a3d40d178c" >
 		<http:listener doc:name="POST /orders" doc:id="408bcc5d-7423-448f-ac77-7f42d8dcd168" config-ref="HTTP_Listener_config" path="/orders"/>
 		<logger level="INFO" doc:name="Log Request" doc:id="1629704e-0937-49b4-910c-a342f2080a0f" message="Incoming order request: #[payload]"/>
-		<ee:transform doc:name="Transform Message" doc:id="20361ae0-bd9a-492c-bd2b-764a2dd68f1b" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	message: "Flow configurato con successo",
-	timestamp: now(),
-	receivedPayload: payload
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
+		<set-variable value="#[uuid()]" doc:name="generate correlation id" doc:id="cbfffc91-9314-4198-b9f1-05b99713adc9" variableName="correlationId"/>
+		<set-variable value="#[payload]" doc:name="save request payload" doc:id="37929e95-ee98-46fd-a5f2-db05949b21b7" variableName="requestPayload"/>
+		<flow-ref doc:name="check idempotency" doc:id="1ffd718f-e720-4282-904e-d437c3b1b006" name="check-idempotency"/>
+		<choice doc:name="already processed" doc:id="bd4f7c6b-96af-4142-a5dd-7f3c77f60e15" >
+			<when expression="#[vars.cached default false]">
+				<logger level="INFO" doc:name="Log cached response" doc:id="25c48d12-7c4e-4148-ae15-def32dff5da5" message="Returning cached response for order #[vars.orderId]"/>
+			</when>
+			<otherwise >
+				<logger level="DEBUG" doc:name="debug orderId before flowRef ProcessOrder" doc:id="3f999e81-d6e7-444f-8904-245dc25b7cdf" message="idempotencyKey: #[vars.idempotencyKey] | orderId: #[payload.order_id] | response: #[write(payload,'application/json')]"/>
+				<flow-ref doc:name="Flow Reference process order" doc:id="15fb654b-4f28-448b-b7dc-b41243d6aa05" name="process-order"/>
+				<logger level="DEBUG" doc:name="debug orderId after flowRef ProcessOrder" doc:id="4b6f3e37-ab33-4dab-bf78-78f31e082f77" message="idempotencyKey: #[vars.idempotencyKey] | orderId: #[payload.order_id] | response: #[write(payload,'application/json')]" />
+				<logger level="INFO" doc:name="Log completition" doc:id="7da29da4-1694-4362-85de-090947c59918" message="Request completed successfully - Order #[vars.orderId]"/>
+			</otherwise>
+		</choice>
 	</flow>
-	<flow name="mulesoft-payment-orchestrationFlow1" doc:id="9257926d-403f-4990-b08b-8e038be8c6ad" >
+	<flow name="get-orders" doc:id="9257926d-403f-4990-b08b-8e038be8c6ad" >
 		<http:listener doc:name="GET /test-db" doc:id="468077f1-1ddd-4775-b810-c2e3362b5195" config-ref="HTTP_Listener_config" path="/test-db"/>
 		<db:select doc:name="Test DB Connection" doc:id="29aa7d7d-5e9f-427d-b102-aba59a82b4f8" config-ref="Database_Config">
 			<db:sql ><![CDATA[SELECT 1 as test, NOW() as timestamp]]></db:sql>
@@ -48,5 +53,209 @@ output application/json
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+	</flow>
+	<sub-flow name="check-idempotency" doc:id="e2326fa0-f648-41b2-9118-df13b63ec373" >
+		<set-variable value="#[attributes.headers.'idempotency' default uuid()&#10;//Legge header Idempotency-Key dalla richiesta. Se manca, genera UUID automaticamente]" doc:name="Extract Idempotency Key" doc:id="7a01b946-a361-4554-b70d-0a9a438b911f" variableName="idempotencyKey"/>
+		<db:select doc:name="Check Idempotency Log" doc:id="ac7dc49b-32ce-46b6-b4eb-28e15862ce17" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT order_id as orderId, response_payload as responsePayload
+FROM idempotency_log
+WHERE idempotency_key = :key
+AND expires_at > NOW()]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+    key: vars.idempotencyKey
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Found - Return Cached" doc:id="87d7d2bc-5611-4b4b-b897-5c492d6ab2ef" >
+			<when expression="#[sizeOf(payload) &gt; 0&#10;//Se la query ha ritornato almeno 1 riga, la richiesta è già stata processata.]">
+				<ee:transform doc:name="Transform Message" doc:id="6ed1201f-15e4-41de-b2af-beaa3b00b455" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+//Prende la risposta cachata dal db e la converte da stringa JSON a oggetto.
+read(payload[0].responsePayload, "application/json")]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="true" doc:name="Mark as cached" doc:id="1f23f46a-c8a6-4942-9df1-a91e059aa007" variableName="cached"/>
+				<logger level="INFO" doc:name="Log cache hit" doc:id="6c2442b2-4012-4711-befa-a04d1ce2c5d8" message="idempotency hit: returning cached response for key #[vars.idempotencyKey]"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Log new request" doc:id="c0e59482-74fb-4daf-be6f-6b488a49552b" message="new request with idempotency key: #[vars.idempotencyKey]"/>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="process-order" doc:id="5cfecdad-6f0d-4acd-904e-d468e9b8e691" >
+		<try doc:name="Try" doc:id="e1e1abd0-474e-41a9-b6b9-8dda6dd3c21c" >
+		<logger level="INFO" doc:name="Log start processing" message="starting order processing for customer #[vars.requestPayload.customer_id]"/>
+<db:insert doc:name="create order" config-ref="Database_Config" autoGenerateKeys="true">
+  <db:sql><![CDATA[
+    INSERT INTO orders (customer_id, amount, status, correlation_id)
+    VALUES (:customerId, :amount, 'PENDING', :correlationId)
+  ]]></db:sql>
+  <db:input-parameters><![CDATA[
+    #[%dw 2.0
+      output application/json
+      ---
+      {
+        customerId: vars.requestPayload.customer_id,
+        amount: vars.requestPayload.amount,
+        correlationId: vars.correlationId
+      }
+    ]
+  ]]></db:input-parameters>
+</db:insert>
+			<logger level="ERROR" doc:name="Debug payload insert id" message='Payload after insert : #[write(payload,"application/json")]' />
+			<set-variable variableName="orderId" value="#[payload.generatedKeys.GENERATED_KEY]" doc:name="Set orderId" />
+<logger level="INFO" doc:name="Debug recovered orderId" message="Recovered orderId #[vars.orderId]" />
+<!-- Tutto il resto rimane invariato -->
+
+
+			<http:request method="POST" doc:name="Request call payment gateway" doc:id="5fc5453b-c0cb-447f-94f6-11f5352c95d5" config-ref="HTTP_Request_Mock_Payment" path="/mock-payment">
+				<http:body ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+    order_id: vars.orderId,
+    amount: vars.requestPayload.amount,
+    currency: "EUR",
+    correlation_id: vars.correlationId
+}]]]></http:body>
+				<http:headers ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+    "Content-Type": "application/json",
+    "X-Correlation-ID": vars.correlationId,
+    "X-Idempotency-Key": vars.idempotencyKey
+}]]]></http:headers>
+			</http:request>
+			<set-variable value="#[payload]" doc:name="save payment response" doc:id="3f58858c-3cb2-4c74-8db0-5a877d1dfafd" variableName="paymentResponse"/>
+			<db:insert doc:name="Insert create payment record" doc:id="b72d1a75-c0ed-491d-927f-9fade8c89312" config-ref="Database_Config">
+				<db:sql ><![CDATA[INSERT INTO payments (
+    order_id,
+    transaction_id,
+    status,
+    amount,
+    payment_method
+) VALUES (
+    :orderId,
+    :transactionId,
+    'SUCCESS',
+    :amount,
+    'CREDIT_CARD'
+)]]></db:sql>
+				<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+    orderId: vars.orderId,
+    transactionId: uuid(),
+    amount: vars.requestPayload.amount
+}]]]></db:input-parameters>
+			</db:insert>
+			<db:update doc:name="Update confirm order" doc:id="2244cfa0-971f-42f9-a818-0de94d077f2b" config-ref="Database_Config">
+				<db:sql ><![CDATA[UPDATE orders 
+SET status = 'CONFIRMED'
+WHERE id = :orderId]]></db:sql>
+				<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+    orderId: vars.orderId
+}]]]></db:input-parameters>
+			</db:update>
+			<logger level="INFO" doc:name="Log success" doc:id="073355ba-16b0-4fdb-90c6-a74c58060827" message="Order #[vars.orderId] confirmed successfully"/>
+			<ee:transform doc:name="Build success response" doc:id="e891b764-327b-4f8a-bb78-abad22e53635" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "success",
+	order_id: vars.orderId,
+	correlation_id: vars.correlationId,
+	amount: vars.requestPayload.amount,
+	customer_id: vars.requestPayload.customer_id,
+	timestamp: now()
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Ref Save Idempotency Log" doc:id="d21feba0-1c15-4fba-9347-efd68a369fae" name="save-idempotency-log"/>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate Handle payment failure" doc:id="825797b8-92eb-4db0-87b4-053faeada2d8" type="HTTP:TIMEOUT, HTTP:CONNECTIVITY, APP:PAYMENT_GATEWAY_ERROR, ANY">
+					<logger level="ERROR" doc:name="Log error" doc:id="7a9798a4-d63e-42d5-90cb-7c3d3927635a" message="Message: Payment failed for order #[vars.orderId default 'N/A']: #[error.description default 'Unknown error']"/>
+					<db:update doc:name="Update mark order as failed (compensation)" doc:id="438d5a34-e94f-4948-8464-5c160c0a2ce3" config-ref="Database_Config">
+						<db:sql ><![CDATA[UPDATE orders 
+SET status = 'FAILED'
+WHERE id = :orderId]]></db:sql>
+						<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/json
+---
+//Se il pagamento fallisce, aggiorna l'ordine a FAILED invece di lasciarlo PENDING.
+{
+    orderId: vars.orderId
+}]]]></db:input-parameters>
+					</db:update>
+					<set-variable value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;    status: "failed",&#10;    order_id: vars.orderId default null,&#10;    correlation_id: vars.correlationId default null,&#10;    errorInfo: {&#10;        errorType: if (error.errorType?) error.errorType.identifier else "UNKNOWN",&#10;        description: if (error.description?) error.description else "Unknown error occurred"&#10;    },&#10;    timestamp: now()&#10;}]' doc:name="prepare error response" doc:id="b0d7da65-8184-4e13-b6c2-415a09f04d17" variableName="errorResponse"/>
+					<set-payload value="#[vars.errorResponse]" doc:name="Set error Payload" doc:id="dd4036c4-77c0-4bd3-ad54-968bc376dae2" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	</sub-flow>
+	<sub-flow name="save-idempotency-log" doc:id="3be8c3a5-ef9a-4c4b-8352-dfd3fa95df60" >
+		<set-variable value="#[payload]" doc:name="save response payload" doc:id="7989fc79-bd1f-4203-ae2c-875294d10b3e" variableName="responseToSave"/>
+		<logger level="DEBUG" doc:name="debug orderId before insert" doc:id="40520e2f-f4eb-47e9-833a-5dda8662b634" message="idempotencyKey: #[vars.idempotencyKey] | orderId: #[payload.order_id] | response: #[write(payload,'application/json')]"/>
+		<db:insert doc:name="Insert Save idempotency log" doc:id="c2ef5e08-64ed-4fb3-b9a6-25bd917ad912" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO idempotency_log (
+    idempotency_key,
+    order_id,
+    response_payload,
+    expires_at
+) VALUES (
+    :key,
+    :orderId,
+    :response,
+    DATE_ADD(NOW(), INTERVAL 24 HOUR)
+)
+ON DUPLICATE KEY UPDATE
+    response_payload = VALUES(response_payload)
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+    key: vars.idempotencyKey,
+    orderId: payload.order_id,
+    response: write(payload, "application/json")
+}]]]></db:input-parameters>
+		</db:insert>
+		<logger level="DEBUG" doc:name="Log idempotency saved" doc:id="2ce53c44-f83b-46b7-a819-cea53775cc7c" message="idempotency log saved for key #[vars.idempotencyKey]"/>
+		<set-payload value="#[vars.responseToSave]" doc:name="Restore response payload" doc:id="0e450e8d-9baa-4fad-abd4-3c57b9a3cd73" />
+	</sub-flow>
+	<flow name="mock-payment-gateway" doc:id="8155bcf6-09de-42dd-b568-0a4559114d29" >
+		<http:listener doc:name="Mock Payment Gateway" doc:id="b14ff909-1ca8-4957-a057-63368619e312" config-ref="HTTP_Listener_config" path="/mock-payment"/>
+		<choice doc:name="Choice simulate success" doc:id="4fe17694-d980-42f0-bbdd-7ea82931701c" >
+			<when expression="#[randomInt(100) &lt; 80]">
+				<ee:transform doc:name="Transform Message" doc:id="b2494d9e-40e8-46b7-bc75-f943257155cf" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "approved",
+	transaction_id: uuid(),
+	amount: payload.amount,
+	timestamp: now()
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error Simulate payment failure" doc:id="ecd30625-0de5-4107-aa5e-552add14c566" type="APP:PAYMENT_GATEWAY_ERROR" description="Payment gateway timeout simulation"/>
+			</otherwise>
+		</choice>
 	</flow>
 </mule>
