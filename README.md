@@ -144,24 +144,49 @@ API available at http://localhost:8081
   
  - [x] Basic flow test -ok
 
- - [ ] Main orchestration flow
+ - [x] Main orchestration flow
 
- - [ ] Error handling and compensation
+ - [x] Error handling and compensation
 
- - [ ] Idempotency implementation
+ - [x] Idempotency implementation
 
- - [ ] Testing suite
+ - [x] GET /orders/{id} endpoint
+
+ - [ ] Advanced testing suite
+
+ - [ ] Documentation finalization
 
 ### API Endpoints
 
-POST /orders - Create new order with payment processing
+**POST** /orders - Create new order with payment processing
+Example
+Headers:
+Content-Type: application/json
+Idempotency-Key (optional: unique key for idempotent processing): test-042
 
-GET /orders/{id} - Retrieve order details
+Body:
+{
+    "customer_id": "CUST123",
+    "amount": 149.99
+}
 
+**GET** /orders/{id} - Retrieve order details with payment information.
+Example 
+Response
+{
+    "order_id": 1,
+    "customer_id": "CUST123",
+    "amount": 149.99,
+    "status": "CONFIRMED",
+    "correlation_id": "...",
+    "transaction_id": "...",
+    "payment_status": "SUCCESS",
+    "created_at": "...",
+    "updated_at": "..."
+}
 ### Learning Objectives
 
 This project demonstrates:
-
 
 
 Distributed transaction management without 2PC
