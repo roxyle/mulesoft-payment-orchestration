@@ -21,13 +21,14 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	</http:request-config>
 	<flow name="post-orders" doc:id="1f5e385c-f963-4098-890f-45a3d40d178c" >
 		<http:listener doc:name="POST /orders" doc:id="408bcc5d-7423-448f-ac77-7f42d8dcd168" config-ref="HTTP_Listener_config" path="/orders"/>
+		<set-variable value="#[attributes.headers.'idempotency-key' default attributes.headers.'Idempotency-Key' default uuid()]" doc:name="Set Variable idempotencyKey" doc:id="6cab9940-ce47-4fec-a490-762541d7647e" variableName="idempotencyKey"/>
 		<logger level="INFO" doc:name="Log Request" doc:id="1629704e-0937-49b4-910c-a342f2080a0f" message="Incoming order request: #[payload]"/>
 		<set-variable value="#[uuid()]" doc:name="generate correlation id" doc:id="cbfffc91-9314-4198-b9f1-05b99713adc9" variableName="correlationId"/>
 		<set-variable value="#[payload]" doc:name="save request payload" doc:id="37929e95-ee98-46fd-a5f2-db05949b21b7" variableName="requestPayload"/>
 		<flow-ref doc:name="check idempotency" doc:id="1ffd718f-e720-4282-904e-d437c3b1b006" name="check-idempotency"/>
 		<choice doc:name="already processed" doc:id="bd4f7c6b-96af-4142-a5dd-7f3c77f60e15" >
 			<when expression="#[vars.cached default false]">
-				<logger level="INFO" doc:name="Log cached response" doc:id="25c48d12-7c4e-4148-ae15-def32dff5da5" message="Returning cached response for order #[vars.orderId]"/>
+				<logger level="INFO" doc:name="Log cached response" doc:id="25c48d12-7c4e-4148-ae15-def32dff5da5" message="Returning cached response (idempotency hit)"/>
 			</when>
 			<otherwise >
 				<logger level="DEBUG" doc:name="debug orderId before flowRef ProcessOrder" doc:id="3f999e81-d6e7-444f-8904-245dc25b7cdf" message="idempotencyKey: #[vars.idempotencyKey] | orderId: #[payload.order_id] | response: #[write(payload,'application/json')]"/>
@@ -114,7 +115,6 @@ output application/json
 		</choice>
 	</flow>
 	<sub-flow name="check-idempotency" doc:id="e2326fa0-f648-41b2-9118-df13b63ec373" >
-		<set-variable value="#[attributes.headers.'idempotency' default uuid()&#10;//Legge header Idempotency-Key dalla richiesta. Se manca, genera UUID automaticamente]" doc:name="Extract Idempotency Key" doc:id="7a01b946-a361-4554-b70d-0a9a438b911f" variableName="idempotencyKey"/>
 		<db:select doc:name="Check Idempotency Log" doc:id="ac7dc49b-32ce-46b6-b4eb-28e15862ce17" config-ref="Database_Config">
 			<db:sql ><![CDATA[SELECT order_id as orderId, response_payload as responsePayload
 FROM idempotency_log
