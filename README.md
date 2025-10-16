@@ -1,6 +1,7 @@
 # Payment Orchestration System 
 
 **Ita**: Sistema di Gestione Pagamenti Enterprise con Pattern Retributivi e Gestione Idempotenza per transazioni distribuite. 
+
 **Eng**: Enterprise-grade Payment Processing System built with MuleSoft, implementing Compensation Patterns and Idempotency Handling for distributed transactions.
 
 
@@ -41,29 +42,29 @@
 - MySQL 8.0+ (MAMP)
 - Java JDK 8 or 11
 
-### How To:
+## How To:
 
-# 1. Database setup
-> SQL in phpMyAdmin (MAMP)
-> CREATE DATABASE payment_system;
+### 1. Database setup
+- SQL in phpMyAdmin (MAMP)
+- CREATE DATABASE payment_system;
 
-# 2. Config
-> git clone https://github.com/roxyle/mulesoft-payment-orchestration.git
-> Update config.yaml with your MySQL credential
-> Import schema from /docs/schema.sql
-> Database Schema:
+### 2. Config
+- git clone https://github.com/roxyle/mulesoft-payment-orchestration.git
+- Update config.yaml with your MySQL credential
+- Import schema from /docs/schema.sql
+- Database Schema:
     **orders**: id, customer_id, amount, status, correlation_id, timestamps  
     **payments**: id, order_id, transaction_id, status, amount  
     **idempotency_log**: id, idempotency_key, order_id, response_payload, expires_at
 
-# 3. Anypoint Studio
-> Open Anypoint Studio
-> Import project
-> Run as -> Mule Application
+### 3. Anypoint Studio
+- Open Anypoint Studio
+- Import project
+- Run as -> Mule Application
 
 API available at http://localhost:8081
 
-### API Endpoints
+## API Endpoints
 
 Method   | Endpoint        | Purpose                     | Status    
 ---------|-----------------|-----------------------------|-----------
@@ -84,7 +85,7 @@ Method   | Endpoint        | Purpose                     | Status
 → Search in log: `mock-payment-gateway successfully started`, if missing: Clean + Restart
 
 
-### Project Status
+## Project Status
 
  - [x] Database schema
 
