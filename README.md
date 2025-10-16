@@ -53,6 +53,7 @@
 - Update config.yaml with your MySQL credential
 - Import schema from /docs/schema.sql
 - Database Schema:
+  
     **orders**: id, customer_id, amount, status, correlation_id, timestamps  
     **payments**: id, order_id, transaction_id, status, amount  
     **idempotency_log**: id, idempotency_key, order_id, response_payload, expires_at
@@ -78,41 +79,11 @@ Method   | Endpoint        | Purpose                     | Status
 **"Cannot connect to database"**  
 → Check MySQL running, check port in `config.yaml` (8889 o 3306)
 
-**"Idempotency non funziona"**  
+**"Idempotency not working"**  
 → Header MUST be exactly `Idempotency-Key`, check `idempotency_log` table
 
 **"Mock gateway 404"**  
 → Search in log: `mock-payment-gateway successfully started`, if missing: Clean + Restart
-
-
-## Project Status
-
- - [x] Database schema
-
- - [x] Project structure
-  
- - [x] Configuration files
-
- - [x] Database connector configuration -Test Ok
-
- - [x] HTTP listener and request configs 
-
- - [x] Basic flow -Test Ok
-
- - [x] Main orchestration flow -Test Ok
-
- - [x] Error handling and compensation -Test Ok
-
- - [x] Idempotency implementation -Test Ok
-
- - [x] GET /orders/{id} endpoint -Test Ok
-
- - [x] Final Testing -Test Ok
-
- - [x] Documentation finalization
-
- - [ ] 
-
 
 ### POST /orders - Success Scenario
 **Request:**
@@ -124,6 +95,7 @@ Body:
 {"customer_id":"CUST001","amount":99.99}
 
 **Response:**
+
 json
 {
   "status": "success",
@@ -143,6 +115,7 @@ json
 
 ### POST /orders - Idempotency Test
 Repeat above request with **same Idempotency-Key**.
+
 **Result:**
 - ✅ Same response returned (order_id unchanged)
 - ✅ Console log: "Idempotency hit: returning cached response"
@@ -152,7 +125,9 @@ Repeat above request with **same Idempotency-Key**.
 
 ### POST /orders - Failure Scenario (Compensation)
 Mock gateway randomly fails (20% rate). When failure occurs:
+
 **Response:**
+
 json
 {
   "status": "failed",
@@ -174,6 +149,7 @@ json
 GET http://localhost:8081/orders/1
 
 **Response:**
+
 json
 {
   "order_id": 1,
@@ -196,6 +172,7 @@ json
 GET http://localhost:8081/orders/2
 
 **Response:**
+
 json
 {
   "order_id": 2,
@@ -224,14 +201,45 @@ json
   "order_id": null
 }
 
-
-Test Results:
+## Test Results:
 ✓ Success flow: order CONFIRMED + payment SUCCESS
 ✓ Failure flow: order FAILED + compensation applied
 ✓ Idempotency: cached response returned, no duplicate processing
 ✓ GET endpoint: returns full order details including payment status
 ✓ GET endpoint: handles failed orders (null payment) correctly
 ✓ GET endpoint: returns 404-like for non-existent orders
+
+
+## Project Status
+
+
+ - [x] Database schema
+
+ - [x] Project structure
+  
+ - [x] Configuration files
+
+ - [x] Database connector configuration -Test Ok
+
+ - [x] HTTP listener and request configs 
+
+ - [x] Basic flow -Test Ok
+
+ - [x] Main orchestration flow -Test Ok
+
+ - [x] Error handling and compensation -Test Ok
+
+ - [x] Idempotency implementation -Test Ok
+
+ - [x] GET /orders/{id} endpoint -Test Ok
+
+ - [x] Final Testing -Test Ok
+
+ - [x] Documentation finalization
+
+ - [ ] 
+
+
 
 ### License
 
