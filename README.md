@@ -137,6 +137,7 @@ json
     "description": "Payment gateway timeout simulation"
   }
 }
+
 **Database Verification:**
 - `orders` table: status=FAILED ✅ (compensation applied)
 - `payments` table: NO record for this order_id ✅ (rollback)
@@ -203,10 +204,15 @@ json
 
 ## Test Results:
 ✓ Success flow: order CONFIRMED + payment SUCCESS
+
 ✓ Failure flow: order FAILED + compensation applied
+
 ✓ Idempotency: cached response returned, no duplicate processing
+
 ✓ GET endpoint: returns full order details including payment status
+
 ✓ GET endpoint: handles failed orders (null payment) correctly
+
 ✓ GET endpoint: returns 404-like for non-existent orders
 
 
