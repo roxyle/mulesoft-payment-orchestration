@@ -1,17 +1,31 @@
 # Payment Orchestration System 
 
-Enterprise-grade Payment Processing System built with MuleSoft, implementing Compensation Patterns and Idempotency Handling for distributed transactions.
+**Ita**: Sistema di Gestione Pagamenti Enterprise con Pattern Retributivi e Gestione Idempotenza per transazioni distribuite. 
+**Eng**: Enterprise-grade Payment Processing System built with MuleSoft, implementing Compensation Patterns and Idempotency Handling for distributed transactions.
+
 
 ## Business Problem
 
-Need to process payments reliably across distributed systems, like order management, payment gateway, inventory? Network failures and retries can cause:
+**Ita**: Se hai bisogno di processare pagamenti in maniera affidabile attraverso sistemi distribuiti, come gestione degli ordini, gateway di pagamento, e/o inventario, i guasti alla rete e i tentativi di riconnessione potrebbero causare:
+
+- Doppi addebiti ai clienti
+- Stato degli ordini incoerente
+- Perdita di transazioni
+  
+**Eng**:  If you need to process payments reliably across distributed systems, like order management, payment gateway and/or inventory, Network failures and retries can cause:
 
 - Double charging customers
 - Inconsistent order states
 - Lost transactions
 
-This system solves these problems through:
+## Solution
 
+**Ita**: 3 pattern testati
+- **Compensation Logic**: Rollback automatico su transazioni parziali
+- **Idempotency**: Gestione sicura di retry, prevenzione di duplicati
+- **Correlation IDs**: Tracciamento end-to-end
+
+**Eng**: 3 tested patterns
 - **Compensation Logic**: Automatic rollback of partial transactions
 - **Idempotency**: Safe retry handling, preventing duplicates
 - **Correlation IDs**: End-to-end traceability
@@ -27,38 +41,27 @@ This system solves these problems through:
 - MySQL 8.0+ (MAMP)
 - Java JDK 8 or 11
 
-## Database Schema
-**orders**: id, customer_id, amount, status, correlation_id, timestamps  
-**payments**: id, order_id, transaction_id, status, amount  
-**idempotency_log**: id, idempotency_key, order_id, response_payload, expires_at
+### How To:
 
-### Database Setup
-> SQL Run in phpMyAdmin
+# 1. Database setup
+> SQL in phpMyAdmin (MAMP)
 > CREATE DATABASE payment_system;
-> Import schema from /docs/schema.sql
 
-### Application Configuration
-> Update src/main/resources/config.yaml with your DB credentials
-> Import project in Anypoint Studio
-> Run as Mule Application
+# 2. Config
+> git clone https://github.com/roxyle/mulesoft-payment-orchestration.git
+> Update config.yaml with your MySQL credential
+> Import schema from /docs/schema.sql
+> Database Schema:
+    **orders**: id, customer_id, amount, status, correlation_id, timestamps  
+    **payments**: id, order_id, transaction_id, status, amount  
+    **idempotency_log**: id, idempotency_key, order_id, response_payload, expires_at
+
+# 3. Anypoint Studio
+> Open Anypoint Studio
+> Import project
+> Run as -> Mule Application
 
 API available at http://localhost:8081
-
-### Project Status
-
- - [x] Database schema
- - [x] Project structure
- - [x] Configuration files
- - [x] Database connector configuration -Test Ok
- - [x] HTTP listener and request configs 
- - [x] Basic flow -Test Ok
- - [x] Main orchestration flow -Test Ok
- - [x] Error handling and compensation -Test Ok
- - [x] Idempotency implementation -Test Ok
- - [x] GET /orders/{id} endpoint -Test Ok
- - [x] Final Testing -Test Ok
- - [x] Documentation finalization
- - [ ] 
 
 ### API Endpoints
 
@@ -68,6 +71,47 @@ Method   | Endpoint        | Purpose                     | Status
 **GET**  | `/orders/{id}`  | Retrieve order details      | ✅ TESTED 
 **GET**  | `/test-db`      | Database connectivity check | ✅ TESTED 
 **POST** | `/mock-payment` | Mock payment gateway        | ✅ TESTED 
+
+## Troubleshooting
+
+**"Cannot connect to database"**  
+→ Check MySQL running, check port in `config.yaml` (8889 o 3306)
+
+**"Idempotency non funziona"**  
+→ Header MUST be exactly `Idempotency-Key`, check `idempotency_log` table
+
+**"Mock gateway 404"**  
+→ Search in log: `mock-payment-gateway successfully started`, if missing: Clean + Restart
+
+
+### Project Status
+
+ - [x] Database schema
+
+ - [x] Project structure
+  
+ - [x] Configuration files
+
+ - [x] Database connector configuration -Test Ok
+
+ - [x] HTTP listener and request configs 
+
+ - [x] Basic flow -Test Ok
+
+ - [x] Main orchestration flow -Test Ok
+
+ - [x] Error handling and compensation -Test Ok
+
+ - [x] Idempotency implementation -Test Ok
+
+ - [x] GET /orders/{id} endpoint -Test Ok
+
+ - [x] Final Testing -Test Ok
+
+ - [x] Documentation finalization
+
+ - [ ] 
+
 
 ### POST /orders - Success Scenario
 **Request:**
