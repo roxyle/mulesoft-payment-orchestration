@@ -123,18 +123,21 @@ Method   | Endpoint        | Purpose                     | Status
 ## HOW TO - API!
 
 ### POST /orders - Success Scenario
+
 Create new order with payment processing
+
 **Request:**
+
 POST http://localhost:8081/orders
 Headers:
 "Content-Type: application/json"
 "Idempotency-Key: unique-key-123" (optional, auto-generated if missing)
 Body:
-{"customer_id":"CUST001","amount":99.99}
+```{"customer_id":"CUST001","amount":99.99}```
 
 **Response 200 Success:**
 
-json
+```json
 {
   "status": "success",
   "order_id": 1,
@@ -142,7 +145,7 @@ json
   "amount": 99.99,
   "customer_id": "CUST001",
   "timestamp": "2025-01-15T..."
-}
+}```
 
 **Database Verification:**
 - `orders` table: 1 record, status=CONFIRMED ✅
@@ -166,7 +169,7 @@ Mock gateway randomly fails (20% rate). When failure occurs:
 
 **Response 500 (Failure - Compensation Applied):**
 
-json
+```json
 {
   "status": "failed",
   "order_id": 2,
@@ -174,7 +177,7 @@ json
     "errorType": "APP:PAYMENT_GATEWAY_ERROR",
     "description": "Payment gateway timeout simulation"
   }
-}
+}```
 
 **Database Verification:**
 - `orders` table: status=FAILED ✅ (compensation applied)
@@ -189,7 +192,7 @@ GET http://localhost:8081/orders/1
 
 **Response:**
 
-json
+```json
 {
   "order_id": 1,
   "customer_id": "CUST001",
@@ -200,7 +203,7 @@ json
   "payment_status": "SUCCESS",
   "created_at": "2025-01-15T...",
   "updated_at": "2025-01-15T..."
-}
+}```
 
 ✅ Full order details including payment information
 
@@ -212,7 +215,7 @@ GET http://localhost:8081/orders/2
 
 **Response:**
 
-json
+```json
 {
   "order_id": 2,
   "customer_id": "CUST001",
@@ -223,7 +226,7 @@ json
   "payment_status": null,
   "created_at": "2025-01-15T...",
   "updated_at": "2025-01-15T..."
-}
+}```
 
 ✅ Correctly shows failed order with no payment (compensation visible)
 
