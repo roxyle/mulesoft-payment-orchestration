@@ -251,6 +251,18 @@ json
   "order_id": null
 }
 
+## Some screenshots
+<img width="1149" height="400" alt="image" src="https://github.com/user-attachments/assets/79dc0fd1-684b-4c0b-b5c2-8ebbbcdac202" />
+
+<img width="439" height="580" alt="image" src="https://github.com/user-attachments/assets/af46cc87-c13d-4e4c-b6f6-fd72a270b97d" />
+
+<img width="544" height="468" alt="image" src="https://github.com/user-attachments/assets/e6a0e8e2-ebe1-4825-b9e0-d0eac8a6dff8" />
+
+<img width="1246" height="369" alt="image" src="https://github.com/user-attachments/assets/ffa9040a-1925-4d8b-a540-a76c3cf6302c" />
+
+<img width="362" height="393" alt="image" src="https://github.com/user-attachments/assets/0745138d-7890-4001-81b5-a12f61c3c9d3" />
+
+
 ## Testing
 
 ### Test 1: Successful Order Creation
@@ -314,7 +326,7 @@ curl http://localhost:8081/orders/1
 ### 1. Compensation Pattern (Saga)
 **Problem:** Distributed transactions without 2PC  
 **Solution:** Manual compensation on failure
-```
+
 Try:
   1. Create Order (status=PENDING)
   2. Call Payment Gateway
@@ -325,23 +337,23 @@ On Error:
   - COMPENSATE: Update Order (status=FAILED)
   - Prevents orphaned PENDING orders
   - No payment record created (logical rollback)
-```
+
 
 ### 2. Idempotency Handling
 **Problem:** Network retries causing duplicate charges  
 **Solution:** Idempotency key caching (24h TTL)
-```
+
 Check Idempotency:
   1. Extract key from header (or generate UUID)
   2. Query: SELECT response FROM idempotency_log WHERE key = ? AND expires_at > NOW()
   3. If found → return cached response (no reprocessing)
   4. If new → process normally, cache response after success
-```
+
 
 ### 3. Correlation IDs
 **Problem:** Distributed tracing across components  
 **Solution:** UUID propagated in all calls/logs
-```
+
 Flow:
   1. Generate correlationId = uuid()
   2. Pass in HTTP headers (X-Correlation-ID)
@@ -350,46 +362,39 @@ Flow:
   5. Return in API responses
 
 Benefit: Track single request across all systems
-```
-
 
 ## Project Status
 
-
  - [x] Database schema
 
- - [x] Project structure
-  
- - [x] Configuration files
+ - [x] Project structure
 
- - [x] Database connector configuration -Test Ok
+ - [x] Configuration files
 
- - [x] HTTP listener and request configs 
+ - [x] Database connector configuration -Test Ok
 
- - [x] Basic flow -Test Ok
+ - [x] HTTP listener and request configs 
 
- - [x] Main orchestration flow -Test Ok
+ - [x] Basic flow -Test Ok
 
- - [x] Error handling and compensation -Test Ok
+ - [x] Main orchestration flow -Test Ok
 
- - [x] Idempotency implementation -Test Ok
+ - [x] Error handling and compensation -Test Ok
 
- - [x] GET /orders/{id} endpoint -Test Ok
+ - [x] Idempotency implementation -Test Ok
 
- - [x] Final Testing -Test Ok
+ - [x] GET /orders/{id} endpoint -Test Ok
 
- - [x] Documentation finalization
+ - [x] Final Testing -Test Ok
+
+ - [x] Documentation finalization
 
  - [ ] 
 
+### About me
 
-
-### License
-
-MIT License
-
-Author: Ylenia Rossi
-
+Author: Ylenia Rossi 
 Purpose: Portfolio project showcasing MuleSoft integration patterns
+Portfolio: https://portfolio-ylenia-ten.vercel.app/
 Status: 🚧 In Development
 
