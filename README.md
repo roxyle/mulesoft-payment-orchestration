@@ -42,28 +42,38 @@
 - MySQL 8.0+ (MAMP)
 - Java JDK 8 or 11
 
-## How To:
-
-### 1. Database setup
-- SQL in phpMyAdmin (MAMP)
-- CREATE DATABASE payment_system;
-
-### 2. Config
-- git clone https://github.com/roxyle/mulesoft-payment-orchestration.git
-- Update config.yaml with your MySQL credential
-- Import schema from /docs/schema.sql
-- Database Schema:
-  
-    **orders**: id, customer_id, amount, status, correlation_id, timestamps  
-    **payments**: id, order_id, transaction_id, status, amount  
-    **idempotency_log**: id, idempotency_key, order_id, response_payload, expires_at
-
-### 3. Anypoint Studio
-- Open Anypoint Studio
-- Import project
-- Run as -> Mule Application
-
 API available at http://localhost:8081
+
+## Setup Instructions
+
+1. **Clone Repository**
+```bash
+   git clone https://github.com/roxyle/mulesoft-payment-orchestration.git
+   cd mulesoft-payment-orchestration
+```
+
+2. **Database Setup**
+   - Start MAMP MySQL
+   - Open phpMyAdmin: http://localhost:8888/phpMyAdmin
+   - Create database `payment_system`
+   - Execute SQL scripts from `/database/schema.sql`
+
+3. **Configuration**
+   - Copy `config.yaml.example` to `config.yaml`
+   - Update database credentials if needed (default: root/root)
+
+4. **Run Application**
+   - Import project in Anypoint Studio
+   - Run As → Mule Application
+   - Wait for DEPLOYED message
+
+5. **Test**
+```bash
+   curl -X POST http://localhost:8081/orders \
+     -H "Content-Type: application/json" \
+     -H "Idempotency-Key: test-001" \
+     -d '{"customer_id":"CUST001","amount":99.99}'
+```
 
 ## API Endpoints
 
