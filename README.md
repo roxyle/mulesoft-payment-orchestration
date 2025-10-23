@@ -149,7 +149,8 @@ Body:
   "amount": 99.99,
   "customer_id": "CUST001",
   "timestamp": "2025-01-15T..."
-}```
+}
+```
 
 **Database Verification:**
 - `orders` table: 1 record, status=CONFIRMED ✅
@@ -181,7 +182,8 @@ Mock gateway randomly fails (20% rate). When failure occurs:
     "errorType": "APP:PAYMENT_GATEWAY_ERROR",
     "description": "Payment gateway timeout simulation"
   }
-}```
+}
+```
 
 **Database Verification:**
 - `orders` table: status=FAILED ✅ (compensation applied)
@@ -207,7 +209,8 @@ GET http://localhost:8081/orders/1
   "payment_status": "SUCCESS",
   "created_at": "2025-01-15T...",
   "updated_at": "2025-01-15T..."
-}```
+}
+```
 
 ✅ Full order details including payment information
 
@@ -230,7 +233,8 @@ GET http://localhost:8081/orders/2
   "payment_status": null,
   "created_at": "2025-01-15T...",
   "updated_at": "2025-01-15T..."
-}```
+}
+```
 
 ✅ Correctly shows failed order with no payment (compensation visible)
 
