@@ -151,6 +151,7 @@ Body:
   "timestamp": "2025-01-15T..."
 }
 ```
+<img width="1449" height="953" alt="arcpost" src="https://github.com/user-attachments/assets/11c3b412-676f-4487-bf1a-5417c5a7056f" />
 
 **Database Verification:**
 - `orders` table: 1 record, status=CONFIRMED ✅
@@ -190,6 +191,8 @@ Mock gateway randomly fails (20% rate). When failure occurs:
 - `payments` table: NO record for this order_id ✅ (rollback)
 - `idempotency_log` table: NO record ✅ (errors not cached)
 
+
+
 ---
 
 ### GET /orders/{id} - Retrieve Success Order
@@ -213,6 +216,8 @@ GET http://localhost:8081/orders/1
 ```
 
 ✅ Full order details including payment information
+
+<img width="716" height="951" alt="Screenshot 2025-10-15 201757" src="https://github.com/user-attachments/assets/1584d828-e99b-4e46-82f1-6582b8aca2f5" />
 
 ---
 
@@ -238,6 +243,8 @@ GET http://localhost:8081/orders/2
 
 ✅ Correctly shows failed order with no payment (compensation visible)
 
+<img width="750" height="953" alt="Screenshot 2025-10-15 201746" src="https://github.com/user-attachments/assets/291f20f4-bac3-4caa-b320-cad8b1a2bf30" />
+
 ---
 
 ### GET /orders/{id} - Order Not Found
@@ -251,7 +258,11 @@ json
   "order_id": null
 }
 
-## Some screenshots
+<img width="623" height="777" alt="Screenshot 2025-10-15 201809" src="https://github.com/user-attachments/assets/9d6795d2-54a4-4b64-a67f-4d06d5fa68d1" />
+
+---
+
+## Anypoint Studio Flows
 <img width="1149" height="400" alt="image" src="https://github.com/user-attachments/assets/79dc0fd1-684b-4c0b-b5c2-8ebbbcdac202" />
 
 <img width="439" height="580" alt="image" src="https://github.com/user-attachments/assets/af46cc87-c13d-4e4c-b6f6-fd72a270b97d" />
