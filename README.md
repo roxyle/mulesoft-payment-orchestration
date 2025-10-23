@@ -86,25 +86,53 @@ Method   | Endpoint        | Purpose                     | Status
 
 ## Troubleshooting
 
-**"Cannot connect to database"**  
-→ Check MySQL running, check port in `config.yaml` (8889 o 3306)
+### Issue: "Cannot connect to database"
+**Cause:** MAMP MySQL not running or wrong port
 
-**"Idempotency not working"**  
-→ Header MUST be exactly `Idempotency-Key`, check `idempotency_log` table
+**Solution:**
+1. Start MAMP MySQL
+2. Check port in MAMP Preferences → Ports
+3. Update `config.yaml` with correct port (8889 or 3306)
+4. Restart application
+
+### Issue: "Column 'order_id' cannot be null"
+**Cause:** Idempotency log trying to save before order creation
+
+**Solution:** Ensure `save-idempotency-log` is called INSIDE Try block AFTER order confirmation
+
+### Issue: "HTTP 404 on /mock-payment"
+**Cause:** Mock payment gateway flow not deployed
+
+**Solution:**
+1. Verify flow exists in XML (search for "mock-payment-gateway")
+2. Check console logs for deployment errors
+3. Restart application with Clean build
 
 **"Mock gateway 404"**  
 → Search in log: `mock-payment-gateway successfully started`, if missing: Clean + Restart
 
+### Issue: "Idempotency not working"
+**Cause:** Header name mismatch or TTL expired
+
+**Solution:**
+1. Use exact header: `Idempotency-Key` (case-sensitive)
+2. Check `idempotency_log` table: `SELECT * FROM idempotency_log;`
+3. Verify expires_at > NOW()
+
+
+## HOW TO - API!
+
 ### POST /orders - Success Scenario
+Create new order with payment processing
 **Request:**
 POST http://localhost:8081/orders
 Headers:
 "Content-Type: application/json"
-"Idempotency-Key: unique-key-123"
+"Idempotency-Key: unique-key-123" (optional, auto-generated if missing)
 Body:
 {"customer_id":"CUST001","amount":99.99}
 
-**Response:**
+**Response 200 Success:**
 
 json
 {
@@ -136,7 +164,7 @@ Repeat above request with **same Idempotency-Key**.
 ### POST /orders - Failure Scenario (Compensation)
 Mock gateway randomly fails (20% rate). When failure occurs:
 
-**Response:**
+**Response 500 (Failure - Compensation Applied):**
 
 json
 {
@@ -205,14 +233,59 @@ json
 **Request:**
 GET http://localhost:8081/orders/999
 
-**Response:**
+**Response 404:**
 json
 {
   "error": "Order not found",
   "order_id": null
 }
 
-## Test Results:
+## Testing
+
+### Test 1: Successful Order Creation
+```bash
+curl -X POST http://localhost:8081/orders \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: unique-001" \
+  -d '{"customer_id":"CUST001","amount":99.99}'
+```
+**Expected:** Order created, payment successful, status=CONFIRMED
+
+**Verify in Database:**
+```sql
+SELECT * FROM orders WHERE id = 1;  -- status = CONFIRMED
+SELECT * FROM payments WHERE order_id = 1;  -- status = SUCCESS
+```
+
+### Test 2: Idempotency
+Repeat Test 1 with same Idempotency-Key
+**Expected:** Same response, no duplicate order created
+
+**Verify:**
+```sql
+SELECT COUNT(*) FROM orders WHERE customer_id = 'CUST001';  -- Should be 1
+```
+
+### Test 3: Payment Failure (Compensation)
+Mock gateway has 20% random failure rate. Keep testing until failure occurs.
+
+**Expected:** Order created with status=FAILED, no payment record
+
+**Verify:**
+```sql
+SELECT * FROM orders WHERE status = 'FAILED';  -- Should exist
+SELECT * FROM payments WHERE order_id IN (
+    SELECT id FROM orders WHERE status = 'FAILED'
+);  -- Should be empty (compensation worked)
+```
+
+### Test 4: Retrieve Order
+```bash
+curl http://localhost:8081/orders/1
+```
+**Expected:** Full order details with payment information
+
+### Test Results:
 ✓ Success flow: order CONFIRMED + payment SUCCESS
 
 ✓ Failure flow: order FAILED + compensation applied
@@ -224,6 +297,49 @@ json
 ✓ GET endpoint: handles failed orders (null payment) correctly
 
 ✓ GET endpoint: returns 404-like for non-existent orders
+
+## Implementation Patterns
+
+### 1. Compensation Pattern (Saga)
+**Problem:** Distributed transactions without 2PC  
+**Solution:** Manual compensation on failure
+```
+Try:
+  1. Create Order (status=PENDING)
+  2. Call Payment Gateway
+  3. Create Payment Record
+  4. Update Order (status=CONFIRMED)
+
+On Error:
+  - COMPENSATE: Update Order (status=FAILED)
+  - Prevents orphaned PENDING orders
+  - No payment record created (logical rollback)
+```
+
+### 2. Idempotency Handling
+**Problem:** Network retries causing duplicate charges  
+**Solution:** Idempotency key caching (24h TTL)
+```
+Check Idempotency:
+  1. Extract key from header (or generate UUID)
+  2. Query: SELECT response FROM idempotency_log WHERE key = ? AND expires_at > NOW()
+  3. If found → return cached response (no reprocessing)
+  4. If new → process normally, cache response after success
+```
+
+### 3. Correlation IDs
+**Problem:** Distributed tracing across components  
+**Solution:** UUID propagated in all calls/logs
+```
+Flow:
+  1. Generate correlationId = uuid()
+  2. Pass in HTTP headers (X-Correlation-ID)
+  3. Store in database (orders.correlation_id)
+  4. Include in all log messages
+  5. Return in API responses
+
+Benefit: Track single request across all systems
+```
 
 
 ## Project Status
