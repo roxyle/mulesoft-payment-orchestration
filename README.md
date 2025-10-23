@@ -129,11 +129,15 @@ Create new order with payment processing
 **Request:**
 
 POST http://localhost:8081/orders
+
 Headers:
+
 "Content-Type: application/json"
 "Idempotency-Key: unique-key-123" (optional, auto-generated if missing)
+
 Body:
-```{"customer_id":"CUST001","amount":99.99}```
+
+{"customer_id":"CUST001","amount":99.99}
 
 **Response 200 Success:**
 
