@@ -31,6 +31,28 @@
 - **Idempotency**: Safe retry handling, preventing duplicates
 - **Correlation IDs**: End-to-end traceability
 
+  <img width="568" height="1288" alt="Workflow" src="https://github.com/user-attachments/assets/7310fa23-901a-442f-990e-bf4982544241" />
+
+--- TABLES ---
+
+📗 ORDERS / Pratiche (all)
+
+   - ID, Client, Amount, Status (PENDING/CONFIRMED/FAILED), Correlation ID
+   - Always write first
+   - Update at the end (success or fail)
+
+📘 PAYMENTS (only success)
+
+   - Order ID, Transaction ID, Amount, Method
+   - Generated ONLY if gateway response is OK
+   - If we see Order #5 without PAYMENT = failed
+
+📙 IDEMPOTENCY_LOG
+
+   - Key, Order ID, Response, Expires (24h)
+   - Checked BEFORE initiating order
+   - Write AFTER success (not on error)
+
 ## Tech Stack
 - **Integration**: MuleSoft Anypoint Platform 4.9.9 EE
 - **Database**: MySQL 8.0 (via MAMP)
