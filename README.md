@@ -35,19 +35,19 @@
 
 --- TABLES ---
 
-📗 ORDERS / Pratiche (all)
+- ORDERS / Pratiche (all)
 
    - ID, Client, Amount, Status (PENDING/CONFIRMED/FAILED), Correlation ID
    - Always write first
    - Update at the end (success or fail)
 
-📘 PAYMENTS (only success)
+- PAYMENTS (only success)
 
    - Order ID, Transaction ID, Amount, Method
    - Generated ONLY if gateway response is OK
    - If we see Order #5 without PAYMENT = failed
 
-📙 IDEMPOTENCY_LOG
+- IDEMPOTENCY_LOG
 
    - Key, Order ID, Response, Expires (24h)
    - Checked BEFORE initiating order
