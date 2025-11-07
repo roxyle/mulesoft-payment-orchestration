@@ -7,17 +7,9 @@
 
 ## Business Problem
 
-**Ita**: Se hai bisogno di processare pagamenti in maniera affidabile attraverso sistemi distribuiti, come gestione degli ordini, gateway di pagamento, e/o inventario, i guasti alla rete e i tentativi di riconnessione potrebbero causare:
-
-- Doppi addebiti ai clienti
-- Stato degli ordini incoerente
-- Perdita di transazioni
+**Ita**: Se hai bisogno di processare pagamenti in maniera affidabile attraverso sistemi distribuiti, come gestione degli ordini, gateway di pagamento, e/o inventario, i guasti alla rete e i tentativi di riconnessione potrebbero causare doppi addebiti ai clienti, stato degli ordini incoerente e/o perdita di transazioni
   
-**Eng**:  If you need to process payments reliably across distributed systems, like order management, payment gateway and/or inventory, Network failures and retries can cause:
-
-- Double charging customers
-- Inconsistent order states
-- Lost transactions
+**Eng**:  If you need to process payments reliably across distributed systems, like order management, payment gateway and/or inventory, Network failures and retries can cause double charging on customers, inconsistent order states and/or lost transactions
 
 ## Solution
 
@@ -176,9 +168,9 @@ Body:
 <img width="1449" height="953" alt="arcpost" src="https://github.com/user-attachments/assets/11c3b412-676f-4487-bf1a-5417c5a7056f" />
 
 **Database Verification:**
-- `orders` table: 1 record, status=CONFIRMED ✅
-- `payments` table: 1 record, status=SUCCESS ✅
-- `idempotency_log` table: 1 record with 24h TTL ✅
+- `orders` table: 1 record, status=CONFIRMED
+- `payments` table: 1 record, status=SUCCESS
+- `idempotency_log` table: 1 record with 24h TTL
 
 ---
 
@@ -186,9 +178,9 @@ Body:
 Repeat above request with **same Idempotency-Key**.
 
 **Result:**
-- ✅ Same response returned (order_id unchanged)
-- ✅ Console log: "Idempotency hit: returning cached response"
-- ✅ Database: Still only 1 order (no duplicate created)
+- Same response returned (order_id unchanged)
+- Console log: "Idempotency hit: returning cached response"
+- Database: Still only 1 order (no duplicate created)
 
 ---
 
@@ -209,9 +201,9 @@ Mock gateway randomly fails (20% rate). When failure occurs:
 ```
 
 **Database Verification:**
-- `orders` table: status=FAILED ✅ (compensation applied)
-- `payments` table: NO record for this order_id ✅ (rollback)
-- `idempotency_log` table: NO record ✅ (errors not cached)
+- `orders` table: status=FAILED (compensation applied)
+- `payments` table: NO record for this order_id (rollback)
+- `idempotency_log` table: NO record (errors not cached)
 
 
 
@@ -237,7 +229,7 @@ GET http://localhost:8081/orders/1
 }
 ```
 
-✅ Full order details including payment information
+Full order details including payment information
 
 <img width="716" height="951" alt="Screenshot 2025-10-15 201757" src="https://github.com/user-attachments/assets/1584d828-e99b-4e46-82f1-6582b8aca2f5" />
 
@@ -263,7 +255,7 @@ GET http://localhost:8081/orders/2
 }
 ```
 
-✅ Correctly shows failed order with no payment (compensation visible)
+Correctly shows failed order with no payment (compensation visible)
 
 <img width="750" height="953" alt="Screenshot 2025-10-15 201746" src="https://github.com/user-attachments/assets/291f20f4-bac3-4caa-b320-cad8b1a2bf30" />
 
@@ -305,7 +297,7 @@ curl -X POST http://localhost:8081/orders \
   -H "Idempotency-Key: unique-001" \
   -d '{"customer_id":"CUST001","amount":99.99}'
 ```
-**Expected:** Order created, payment successful, status=CONFIRMED
+**Expected:** order created, payment successful, status=CONFIRMED
 
 **Verify in Database:**
 ```sql
@@ -315,7 +307,7 @@ SELECT * FROM payments WHERE order_id = 1;  -- status = SUCCESS
 
 ### Test 2: Idempotency
 Repeat Test 1 with same Idempotency-Key
-**Expected:** Same response, no duplicate order created
+**Expected:** same response, no duplicate order created
 
 **Verify:**
 ```sql
@@ -325,7 +317,7 @@ SELECT COUNT(*) FROM orders WHERE customer_id = 'CUST001';  -- Should be 1
 ### Test 3: Payment Failure (Compensation)
 Mock gateway has 20% random failure rate. Keep testing until failure occurs.
 
-**Expected:** Order created with status=FAILED, no payment record
+**Expected:** order created with status=FAILED, no payment record
 
 **Verify:**
 ```sql
@@ -339,20 +331,20 @@ SELECT * FROM payments WHERE order_id IN (
 ```bash
 curl http://localhost:8081/orders/1
 ```
-**Expected:** Full order details with payment information
+**Expected:** full order details with payment information
 
 ### Test Results:
-✓ Success flow: order CONFIRMED + payment SUCCESS
+Success flow: order CONFIRMED + payment SUCCESS
 
-✓ Failure flow: order FAILED + compensation applied
+Failure flow: order FAILED + compensation applied
 
-✓ Idempotency: cached response returned, no duplicate processing
+Idempotency: cached response returned, no duplicate processing
 
-✓ GET endpoint: returns full order details including payment status
+GET endpoint: returns full order details including payment status
 
-✓ GET endpoint: handles failed orders (null payment) correctly
+GET endpoint: handles failed orders (null payment) correctly
 
-✓ GET endpoint: returns 404-like for non-existent orders
+GET endpoint: returns 404-like for non-existent orders
 
 ## Implementation Patterns
 
@@ -394,7 +386,7 @@ Flow:
   4. Include in all log messages
   5. Return in API responses
 
-Benefit: Track single request across all systems
+Benefit: track single request across all systems
 
 ## Project Status
 
@@ -427,7 +419,7 @@ Benefit: Track single request across all systems
 ### About me
 
 Author: Ylenia Rossi 
-Purpose: Portfolio project showcasing MuleSoft integration patterns
+Purpose: portfolio project showcasing MuleSoft integration patterns
 Portfolio: https://portfolio-ylenia-ten.vercel.app/
 Status: 🚧 In Development
 
