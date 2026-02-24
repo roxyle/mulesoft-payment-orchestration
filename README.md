@@ -4,6 +4,31 @@
 
 **Eng**: Enterprise-grade Payment Processing System built with MuleSoft, implementing Compensation Patterns and Idempotency Handling for distributed transactions.
 
+## Setup Instructions For Non-Developers
+
+**Not a developer? Start here**
+
+**ITA**: Questo progetto dimostra la gestione affidabile di pagamenti in sistemi distribuiti,
+implementando tre pattern architetturali avanzati: compensazione automatica su errore,
+prevenzione di addebiti doppi e tracciabilità end-to-end.
+La demo simula il comportamento reale del sistema: puoi creare ordini, vedere le tabelle
+del database aggiornarsi in tempo reale, e provocare scenari di errore con rollback automatico.
+Il codice sorgente completo è qui sotto per chi vuole approfondire l'implementazione tecnica.
+
+Per vedere il sistema in azione senza installare nulla, usa la demo interattiva cliccando sul seguente link:
+**[▶ Apri la Demo Interattiva](https://mulesoft-payment-ui-demo-kledi3qi7-yles-projects.vercel.app/)**
+
+**ENG**: This project demonstrates reliable payment processing across distributed systems,
+implementing three advanced architectural patterns: automatic failure compensation,
+duplicate charge prevention, and end-to-end traceability.
+The  demo simulates the real system behaviour: create orders, watch database tables update
+in real time, and trigger failure scenarios with automatic rollback.
+The full source code is below for those who want to explore the technical implementation.
+
+To see the system in action without installing anything, use the interactive demo:
+**[▶ Open Interactive Demo](https://mulesoft-payment-ui-demo-kledi3qi7-yles-projects.vercel.app/)**
+
+---
 
 ## Business Problem
 
@@ -56,31 +81,7 @@
 - MySQL 8.0+ (MAMP)
 - Java JDK 8 or 11
 
-## Setup Instructions For Non-Developers
-
-0. **Not a developer? Start here**
-
-**ITA**: Questo progetto dimostra la gestione affidabile di pagamenti in sistemi distribuiti,
-implementando tre pattern architetturali avanzati: compensazione automatica su errore,
-prevenzione di addebiti doppi e tracciabilità end-to-end.
-La demo simula il comportamento reale del sistema: puoi creare ordini, vedere le tabelle
-del database aggiornarsi in tempo reale, e provocare scenari di errore con rollback automatico.
-Il codice sorgente completo è qui sotto per chi vuole approfondire l'implementazione tecnica.
-
-Per vedere il sistema in azione senza installare nulla, usa la demo interattiva cliccando sul seguente link:
-https://mulesoft-payment-ui-demo-kledi3qi7-yles-projects.vercel.app/
-
-**ENG**: This project demonstrates reliable payment processing across distributed systems,
-implementing three advanced architectural patterns: automatic failure compensation,
-duplicate charge prevention, and end-to-end traceability.
-The  demo simulates the real system behaviour: create orders, watch database tables update
-in real time, and trigger failure scenarios with automatic rollback.
-The full source code is below for those who want to explore the technical implementation.
-
-To see the system in action without installing anything, use the interactive demo:
-https://mulesoft-payment-ui-demo-kledi3qi7-yles-projects.vercel.app/
-
-## Setup Instructions For Developers
+## Setup Instructions
 
 1. **Clone Repository**
 ```bash
@@ -445,5 +446,5 @@ Benefit: track single request across all systems
 Author: Ylenia Rossi 
 Purpose: portfolio project showcasing MuleSoft integration patterns
 Portfolio: https://portfolio-ylenia-ten.vercel.app/
-Status: 🚧 In Development
+Status: deployed!
 
