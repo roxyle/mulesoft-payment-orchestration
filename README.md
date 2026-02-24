@@ -15,7 +15,7 @@ del database aggiornarsi in tempo reale, e provocare scenari di errore con rollb
 Il codice sorgente completo è qui sotto per chi vuole approfondire l'implementazione tecnica.
 
 Per vedere il sistema in azione senza installare nulla, usa la demo interattiva cliccando sul seguente link:
-**[▶ Apri la Demo Interattiva](https://mulesoft-payment-ui-demo-kledi3qi7-yles-projects.vercel.app/)**
+**[▶ Apri la Demo Interattiva](https://mulesoft-payment-ui-demo.vercel.app/)**
 
 **ENG**: This project demonstrates reliable payment processing across distributed systems,
 implementing three advanced architectural patterns: automatic failure compensation,
@@ -25,7 +25,7 @@ in real time, and trigger failure scenarios with automatic rollback.
 The full source code is below for those who want to explore the technical implementation.
 
 To see the system in action without installing anything, use the interactive demo:
-**[▶ Open Interactive Demo](https://mulesoft-payment-ui-demo-kledi3qi7-yles-projects.vercel.app/)**
+**[▶ Open Interactive Demo](https://mulesoft-payment-ui-demo.vercel.app/)**
 
 ---
 
