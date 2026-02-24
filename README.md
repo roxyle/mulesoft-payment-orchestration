@@ -4,9 +4,8 @@
 
 **Eng**: Enterprise-grade Payment Processing System built with MuleSoft, implementing Compensation Patterns and Idempotency Handling for distributed transactions.
 
-## Setup Instructions For Non-Developers
-
-**Not a developer? Start here**
+---
+**Not a developer? Start here!**
 
 **ITA**: Questo progetto dimostra la gestione affidabile di pagamenti in sistemi distribuiti,
 implementando tre pattern architetturali avanzati: compensazione automatica su errore,
