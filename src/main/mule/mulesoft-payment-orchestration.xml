@@ -134,7 +134,7 @@ output application/json
 						<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
-//Prende la risposta cachata dal db e la converte da stringa JSON a oggetto.
+//prende la risposta cachata dal db e la converte da stringa JSON a oggetto.
 read(payload[0].responsePayload, "application/json")]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>

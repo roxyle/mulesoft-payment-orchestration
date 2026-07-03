@@ -42,7 +42,8 @@
 - MySQL 8.0+ (MAMP)
 - Java JDK 8 or 11
 
-API available at http://localhost:8081
+API available at http://localhost:{api.port}
+*default port is 8081, see config.yaml*
 
 ## Setup Instructions
 
@@ -54,7 +55,8 @@ API available at http://localhost:8081
 
 2. **Database Setup**
    - Start MAMP MySQL
-   - Open phpMyAdmin: http://localhost:8888/phpMyAdmin
+   - Open phpMyAdmin: http://localhost:{api.port}/phpMyAdmin
+   *default port is {api.port}, see config.yaml*
    - Create database `payment_system`
    - Execute SQL scripts from `/database/schema.sql`
 
@@ -68,8 +70,23 @@ API available at http://localhost:8081
    - Wait for DEPLOYED message
 
 5. **Test**
+
+On postman: http://localhost:{api.port}/test-db
+   *default port is {api.port}, see config.yaml*
+   you should receive:
+
+   {
+    "status": "db connection successful",
+    "result": [
+        {
+            "test": 1,
+            "timestamp": "yyyy-mm-ddThh:mm:ss"
+        }
+    ]
+}
+
 ```bash
-   curl -X POST http://localhost:8081/orders \
+   curl -X POST http://localhost:{api.port}/orders \
      -H "Content-Type: application/json" \
      -H "Idempotency-Key: test-001" \
      -d '{"customer_id":"CUST001","amount":99.99}'
@@ -128,7 +145,8 @@ Create new order with payment processing
 
 **Request:**
 
-POST http://localhost:8081/orders
+POST http://localhost:{api.port}/orders
+*default port is {api.port}, see config.yaml*
 
 Headers:
 
@@ -197,7 +215,8 @@ Mock gateway randomly fails (20% rate). When failure occurs:
 
 ### GET /orders/{id} - Retrieve Success Order
 **Request:**
-GET http://localhost:8081/orders/1
+GET http://localhost:{api.port}/orders/1
+*default port is 8081, see config.yaml*
 
 **Response:**
 
@@ -223,8 +242,8 @@ GET http://localhost:8081/orders/1
 
 ### GET /orders/{id} - Retrieve Failed Order
 **Request:**
-GET http://localhost:8081/orders/2
-
+GET http://localhost:{api.port}/orders/2
+*default port is 8081, see config.yaml*
 **Response:**
 
 ```json
@@ -249,8 +268,8 @@ GET http://localhost:8081/orders/2
 
 ### GET /orders/{id} - Order Not Found
 **Request:**
-GET http://localhost:8081/orders/999
-
+GET http://localhost:{api.port}/orders/999
+*default port is 8081, see config.yaml*
 **Response 404:**
 json
 {
@@ -278,7 +297,7 @@ json
 
 ### Test 1: Successful Order Creation
 ```bash
-curl -X POST http://localhost:8081/orders \
+curl -X POST http://localhost:{api.port}/orders \
   -H "Content-Type: application/json" \
   -H "Idempotency-Key: unique-001" \
   -d '{"customer_id":"CUST001","amount":99.99}'
@@ -315,8 +334,9 @@ SELECT * FROM payments WHERE order_id IN (
 
 ### Test 4: Retrieve Order
 ```bash
-curl http://localhost:8081/orders/1
+curl http://localhost:{api.port}/orders/1
 ```
+*default port is 8081, see config.yaml*
 **Expected:** Full order details with payment information
 
 ### Test Results:
