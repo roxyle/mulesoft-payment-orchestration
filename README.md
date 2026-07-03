@@ -109,10 +109,20 @@ API available at http://localhost:{api.port}
 
 5. **Test**
 
-On postman: http://localhost:{api.port}/test-db
-   *default port is {api.port}, see config.yaml*
+```bash
+   curl -X POST http://localhost:{api.port}/orders \
+     -H "Content-Type: application/json" \
+     -H "Idempotency-Key: test-001" \
+     -d '{"customer_id":"CUST001","amount":99.99}'
+```
+
+
+or on postman: http://localhost:{api.port}/test-db \
+ (*default port is {api.port}, see config.yaml*)
+
    you should receive:
 
+```
    {
     "status": "db connection successful",
     "result": [
@@ -122,12 +132,6 @@ On postman: http://localhost:{api.port}/test-db
         }
     ]
 }
-
-```bash
-   curl -X POST http://localhost:{api.port}/orders \
-     -H "Content-Type: application/json" \
-     -H "Idempotency-Key: test-001" \
-     -d '{"customer_id":"CUST001","amount":99.99}'
 ```
 
 ## API Endpoints
