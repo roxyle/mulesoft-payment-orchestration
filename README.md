@@ -98,8 +98,8 @@ All examples in this README use the default port 8081. If you changed `api.port`
    - Select it, open the **Import** tab and import `database/schema.sql`
 
 3. **Configuration**
-   - Copy `config.yaml.example` to `config.yaml`
-   - Update database credentials if needed (default: root/root)
+   - Settings are in `src/main/resources/config.yaml`: database (host `localhost`, port `8889`, user and password `root`), API port `8081`
+   - Edit this file if your MAMP uses different ports or credentials
 
 4. **Run Application**
    - Import project in Anypoint Studio
