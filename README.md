@@ -33,7 +33,7 @@ To see the system in action without installing anything, use the interactive dem
 
 **Ita**: Se hai bisogno di processare pagamenti in maniera affidabile attraverso sistemi distribuiti, come gestione degli ordini, gateway di pagamento, e/o inventario, i guasti alla rete e i tentativi di riconnessione potrebbero causare doppi addebiti ai clienti, stato degli ordini incoerente e/o perdita di transazioni
   
-**Eng**:  If you need to process payments reliably across distributed systems, like order management, payment gateway and/or inventory, Network failures and retries can cause double charging on customers, inconsistent order states and/or lost transactions
+**Eng**: If you need to process payments reliably across distributed systems, such as order management, payment gateways and inventory, network failures and retries can cause double charges for customers, inconsistent order states and lost transactions.
 
 ## Solution
 
@@ -49,35 +49,31 @@ To see the system in action without installing anything, use the interactive dem
 
   <img width="568" height="1288" alt="Workflow" src="https://github.com/user-attachments/assets/7310fa23-901a-442f-990e-bf4982544241" />
 
---- TABLES ---
+## Database Tables
 
-- ORDERS / Pratiche (all)
+- **orders** (every request)
+   - ID, customer, amount, status (PENDING/CONFIRMED/FAILED), correlation ID
+   - Written first, updated at the end (success or failure)
 
-   - ID, Client, Amount, Status (PENDING/CONFIRMED/FAILED), Correlation ID
-   - Always write first
-   - Update at the end (success or fail)
+- **payments** (successful payments only)
+   - Order ID, transaction ID, amount, method
+   - Created ONLY if the gateway response is OK
+   - An order without a payment record is a failed order
 
-- PAYMENTS (only success)
-
-   - Order ID, Transaction ID, Amount, Method
-   - Generated ONLY if gateway response is OK
-   - If we see Order #5 without PAYMENT = failed
-
-- IDEMPOTENCY_LOG
-
-   - Key, Order ID, Response, Expires (24h)
-   - Checked BEFORE initiating order
-   - Write AFTER success (not on error)
+- **idempotency_log**
+   - Key, order ID, response, expiry (24h)
+   - Checked BEFORE the order is created
+   - Written AFTER success (not on error)
 
 ## Tech Stack
-- **Integration**: MuleSoft Anypoint Platform 4.9.9 EE
-- **Database**: MySQL 8.0 (via MAMP)
+- **Integration**: Mule Runtime 4.9.9 EE (Anypoint Studio 7.21)
+- **Database**: MySQL 5.7 (bundled with MAMP, tested on 5.7.24)
 - **Patterns**: Saga/Compensation, Idempotency, Correlation IDs
 - **API Design**: REST, JSON
 
 ### Prerequisites
-- Anypoint Studio 7.x
-- MySQL 8.0+ (MAMP)
+- Anypoint Studio 7.21 or later
+- MySQL 5.7 (MAMP), tested on 5.7.24
 - Java JDK 17 (bundled with Anypoint Studio 7.21+)
 
 API available at http://localhost:8081
@@ -108,11 +104,24 @@ All examples in this README use the default port 8081. If you changed `api.port`
 
 5. **Test**
 
+First check the database connection: open `GET http://localhost:8081/test-db` in Postman or a browser. You should receive:
+
+```json
+{
+  "status": "db connection successful",
+  "result": [
+    { "test": 1, "timestamp": "yyyy-mm-ddThh:mm:ss" }
+  ]
+}
+```
+
+Then create a test order:
+
 ```bash
-   curl -X POST http://localhost:8081/orders \
-     -H "Content-Type: application/json" \
-     -H "Idempotency-Key: test-001" \
-     -d '{"customer_id":"CUST001","amount":99.99}'
+curl -X POST http://localhost:8081/orders \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: test-001" \
+  -d '{"customer_id":"CUST001","amount":99.99}'
 ```
 
 
@@ -190,14 +199,13 @@ Method   | Endpoint        | Purpose                     | Status
 2. Check console logs for deployment errors
 3. Restart application with Clean build
 
-**"Mock gateway 404"**  
-→ Search in log: `mock-payment-gateway successfully started`, if missing: Clean + Restart
+4. In the console, look for `Message source 'listener' on flow 'mock-payment-gateway' successfully started`. If it is missing: Clean + Restart
 
 ### Issue: "Idempotency not working"
 **Cause:** Header name mismatch or TTL expired
 
 **Solution:**
-1. Use exact header: `Idempotency-Key` (case-sensitive)
+1. Use the header name `Idempotency-Key`
 2. Check `idempotency_log` table: `SELECT * FROM idempotency_log;`
 3. Verify expires_at > NOW()
 
@@ -210,17 +218,13 @@ Create new order with payment processing
 
 **Request:**
 
+```
 POST http://localhost:8081/orders
-
-
-Headers:
-
-"Content-Type: application/json"
-"Idempotency-Key: unique-key-123" (optional, auto-generated if missing)
-
-Body:
+Content-Type: application/json
+Idempotency-Key: unique-key-123   (optional, auto-generated if missing)
 
 {"customer_id":"CUST001","amount":99.99}
+```
 
 **Response 200 Success:**
 
@@ -443,7 +447,7 @@ On Error:
 
 Check Idempotency:
   1. Extract key from header (or generate UUID)
-  2. Query: SELECT response FROM idempotency_log WHERE key = ? AND expires_at > NOW()
+  2. Query: SELECT order_id, response_payload FROM idempotency_log WHERE idempotency_key = ? AND expires_at > NOW()
   3. If found → return cached response (no reprocessing)
   4. If new → process normally, cache response after success
 
@@ -454,12 +458,11 @@ Check Idempotency:
 
 Flow:
   1. Generate correlationId = uuid()
-  2. Pass in HTTP headers (X-Correlation-ID)
-  3. Store in database (orders.correlation_id)
-  4. Include in all log messages
-  5. Return in API responses
+  2. Send it to the payment gateway in the X-Correlation-ID header
+  3. Store it in the database (orders.correlation_id)
+  4. Return it in API responses
 
-Benefit: track single request across all systems
+Benefit: link a single request across the API response, the database and the gateway call
 
 ## Project Status
 
@@ -496,5 +499,5 @@ Benefit: track single request across all systems
 Author: Ylenia Rossi 
 Purpose: portfolio project showcasing MuleSoft integration patterns
 Portfolio: https://portfolio-ylenia-ten.vercel.app/
-Status: deployed!
+Status: complete. The UI demo is deployed on Vercel; the Mule API runs locally.
 
