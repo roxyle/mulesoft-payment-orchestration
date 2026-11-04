@@ -344,7 +344,8 @@ GET http://localhost:8081/orders/999
 { "error": "Order not found", "order_id": "999" }
 ```
 
-<img width="623" height="777" alt="Screenshot 2025-10-15 201809" src="https://github.com/user-attachments/assets/9d6795d2-54a4-4b64-a67f-4d06d5fa68d1" />
+<img width="782" height="850" alt="image" src="https://github.com/user-attachments/assets/5b27419a-90db-4eac-820e-96ae0be989ea" />
+
 
 ---
 
