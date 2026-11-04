@@ -20,7 +20,11 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
     	<http:request-connection protocol="HTTP" host="localhost" port="8081" />
 	</http:request-config>
 	<flow name="post-orders" doc:id="1f5e385c-f963-4098-890f-45a3d40d178c" >
-		<http:listener doc:name="POST /orders" doc:id="408bcc5d-7423-448f-ac77-7f42d8dcd168" config-ref="HTTP_Listener_config" path="/orders"/>
+		<http:listener doc:name="POST /orders" doc:id="408bcc5d-7423-448f-ac77-7f42d8dcd168" config-ref="HTTP_Listener_config" path="/orders">
+			<http:error-response statusCode="#[vars.httpStatus default 500]">
+          		<http:body><![CDATA[#[payload]]]></http:body>
+      		</http:error-response>
+  		</http:listener>
 		<set-variable value="#[attributes.headers.'idempotency-key' default attributes.headers.'Idempotency-Key' default uuid()]" doc:name="Set Variable idempotencyKey" doc:id="6cab9940-ce47-4fec-a490-762541d7647e" variableName="idempotencyKey"/>
 		<logger level="INFO" doc:name="Log Request" doc:id="1629704e-0937-49b4-910c-a342f2080a0f" message="Incoming order request: #[payload]"/>
 		<set-variable value="#[uuid()]" doc:name="generate correlation id" doc:id="cbfffc91-9314-4198-b9f1-05b99713adc9" variableName="correlationId"/>
@@ -56,7 +60,10 @@ output application/json
 		</ee:transform>
 	</flow>
 	<flow name="get-order-detail" doc:id="e636c44e-b3b6-4198-a260-c879427dd89c" >
-		<http:listener doc:name="GET /orders/{orderId}" doc:id="aff341e1-ba53-449f-a939-6eb44612cb82" config-ref="HTTP_Listener_config" path="/orders/{orderId}"/>
+		<http:listener doc:name="GET /orders/{orderId}" doc:id="aff341e1-ba53-449f-a939-6eb44612cb82" config-ref="HTTP_Listener_config" path="/orders/{orderId}">
+		    <http:response statusCode="#[vars.httpStatus default 200]"/>
+		</http:listener>
+		<set-variable variableName="orderId" value="#[attributes.uriParams.orderId]" doc:name="Save orderId"/>
 		<db:select doc:name="Select Get Order Details" doc:id="2a9ba763-1d4e-4be1-acc3-3b52e4d447c9" config-ref="Database_Config">
 			<db:sql ><![CDATA[SELECT 
     o.id as orderId,
@@ -75,7 +82,7 @@ WHERE o.id = :orderId]]></db:sql>
 output application/json
 ---
 {
-    orderId: attributes.uriParams.orderId
+    orderId: vars.orderId
 }]]]></db:input-parameters>
 		</db:select>
 		<choice doc:name="Choice" doc:id="dad93e85-dd9c-4cc6-822b-c536f3fcb62a" >
@@ -100,6 +107,7 @@ output application/json
 				</ee:transform>
 			</when>
 			<otherwise >
+				<set-variable variableName="httpStatus" value="#[404]" doc:name="Set status 404"/>
 				<ee:transform doc:name="Transform Message" doc:id="f05ace5e-3594-4015-9c5b-035078b1d77a" >
 					<ee:message >
 						<ee:set-payload ><![CDATA[%dw 2.0
@@ -107,7 +115,7 @@ output application/json
 ---
 {
     error: "Order not found",
-    order_id: attributes.uriParams.orderId
+    order_id: vars.orderId
 }]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
