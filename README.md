@@ -92,11 +92,10 @@ All examples in this README use the default port 8081. If you changed `api.port`
 ```
 
 2. **Database Setup**
-   - Start MAMP MySQL
+   - Start MAMP (Apache and MySQL)
    - Open phpMyAdmin: http://localhost:8888/phpMyAdmin (served by MAMP on its Apache port 8888, not on the API port)
-   
-   - Create database `payment_system`
-   - Execute SQL scripts from `/database/schema.sql`
+   - Create the database `payment_system`
+   - Select it, open the **Import** tab and import `database/schema.sql`
 
 3. **Configuration**
    - Copy `config.yaml.example` to `config.yaml`
