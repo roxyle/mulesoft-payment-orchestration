@@ -17,7 +17,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
     	<http:request-connection protocol="HTTPS" host="httpstat.us" port="443" />
 	</http:request-config>
 	<http:request-config name="HTTP_Request_Mock_Payment" doc:name="HTTP Request configuration" doc:id="612f8158-944d-414e-9198-b1bb82b9db64" responseTimeout="5000">
-    	<http:request-connection protocol="HTTP" host="localhost" port="8081" />
+    	<http:request-connection protocol="HTTP" host="localhost" port="${api.port}" />
 	</http:request-config>
 	<flow name="post-orders" doc:id="1f5e385c-f963-4098-890f-45a3d40d178c" >
 		<http:listener doc:name="POST /orders" doc:id="408bcc5d-7423-448f-ac77-7f42d8dcd168" config-ref="HTTP_Listener_config" path="/orders">
@@ -174,10 +174,9 @@ read(payload[0].responsePayload, "application/json")]]></ee:set-payload>
     ]
   ]]></db:input-parameters>
 </db:insert>
-			<logger level="ERROR" doc:name="Debug payload insert id" message='Payload after insert : #[write(payload,"application/json")]' />
+			<logger level="DEBUG" doc:name="Debug payload insert id" message='Payload after insert : #[write(payload,"application/json")]' />
 			<set-variable variableName="orderId" value="#[payload.generatedKeys.GENERATED_KEY]" doc:name="Set orderId" />
 <logger level="INFO" doc:name="Debug recovered orderId" message="Recovered orderId #[vars.orderId]" />
-<!-- Tutto il resto rimane invariato -->
 
 
 			<http:request method="POST" doc:name="Request call payment gateway" doc:id="5fc5453b-c0cb-447f-94f6-11f5352c95d5" config-ref="HTTP_Request_Mock_Payment" path="/mock-payment">
