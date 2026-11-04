@@ -1,6 +1,6 @@
 # Payment Orchestration System 
 
-**Ita**: Sistema di Gestione Pagamenti Enterprise con Pattern Retributivi e Gestione Idempotenza per transazioni distribuite. 
+**Ita**: Sistema di Gestione Pagamenti Enterprise con Pattern di Compensazione e Gestione dell'Idempotenza per transazioni distribuite.
 
 **Eng**: Enterprise-grade Payment Processing System built with MuleSoft, implementing Compensation Patterns and Idempotency Handling for distributed transactions.
 
@@ -78,10 +78,10 @@ To see the system in action without installing anything, use the interactive dem
 ### Prerequisites
 - Anypoint Studio 7.x
 - MySQL 8.0+ (MAMP)
-- Java JDK 8 or 11
+- Java JDK 17 (bundled with Anypoint Studio 7.21+)
 
-API available at http://localhost:{api.port}
-*default port is 8081, see config.yaml*
+API available at http://localhost:8081
+All examples in this README use the default port 8081. If you changed `api.port` in `config.yaml`, replace 8081 with your value.
 
 ## Setup Instructions
 
@@ -93,8 +93,8 @@ API available at http://localhost:{api.port}
 
 2. **Database Setup**
    - Start MAMP MySQL
-   - Open phpMyAdmin: http://localhost:{api.port}/phpMyAdmin
-   *default port is {api.port}, see config.yaml*
+   - Open phpMyAdmin: http://localhost:8888/phpMyAdmin (served by MAMP on its Apache port 8888, not on the API port)
+   
    - Create database `payment_system`
    - Execute SQL scripts from `/database/schema.sql`
 
@@ -110,15 +110,15 @@ API available at http://localhost:{api.port}
 5. **Test**
 
 ```bash
-   curl -X POST http://localhost:{api.port}/orders \
+   curl -X POST http://localhost:8081/orders \
      -H "Content-Type: application/json" \
      -H "Idempotency-Key: test-001" \
      -d '{"customer_id":"CUST001","amount":99.99}'
 ```
 
 
-or on postman: http://localhost:{api.port}/test-db \
- (*default port is {api.port}, see config.yaml*)
+or open in Postman or a browser: GET http://localhost:8081/test-db
+
 
    you should receive:
 
@@ -133,6 +133,10 @@ or on postman: http://localhost:{api.port}/test-db \
     ]
 }
 ```
+## Authentication
+
+This is a local demo: the API does not require authentication and runs over plain HTTP (no TLS).
+The only request headers are `Content-Type: application/json` and the optional `Idempotency-Key`.
 
 ## API Endpoints
 
@@ -142,6 +146,26 @@ Method   | Endpoint        | Purpose                     | Status
 **GET**  | `/orders/{id}`  | Retrieve order details      | ✅ TESTED 
 **GET**  | `/test-db`      | Database connectivity check | ✅ TESTED 
 **POST** | `/mock-payment` | Mock payment gateway        | ✅ TESTED 
+
+## Error responses
+
+**Payment failure (500)**, returned by `POST /orders`. The order is created, then marked `FAILED` (compensation).
+
+| Field | Type | Description |
+|---|---|---|
+| `status` | string | Always `failed` |
+| `order_id` | integer or null | ID of the order marked `FAILED`; `null` if the error occurs before the order is created |
+| `correlation_id` | string or null | UUID used to trace the request across logs |
+| `errorInfo.errorType` | string | Mule error identifier, for example `INTERNAL_SERVER_ERROR` when the payment gateway returns 500; `UNKNOWN` if not available |
+| `errorInfo.description` | string | Error message from the failed step |
+| `timestamp` | string | ISO 8601 date and time with offset |
+
+**Order not found (404)**, returned by `GET /orders/{id}`:
+
+| Field | Type | Description |
+|---|---|---|
+| `error` | string | Always `Order not found` |
+| `order_id` | string | The ID requested in the URL, returned as text |
 
 ## Troubleshooting
 
@@ -187,8 +211,8 @@ Create new order with payment processing
 
 **Request:**
 
-POST http://localhost:{api.port}/orders
-*default port is {api.port}, see config.yaml*
+POST http://localhost:8081/orders
+
 
 Headers:
 
@@ -225,7 +249,7 @@ Repeat above request with **same Idempotency-Key**.
 
 **Result:**
 - Same response returned (order_id unchanged)
-- Console log: "Idempotency hit: returning cached response"
+- Console log: "idempotency hit: returning cached response for key <your-key>"
 - Database: Still only 1 order (no duplicate created)
 
 ---
@@ -238,13 +262,16 @@ Mock gateway randomly fails (20% rate). When failure occurs:
 ```json
 {
   "status": "failed",
-  "order_id": 2,
+  "order_id": 8,
+  "correlation_id": "00d17680-3c93-46e3-8f2d-45b1942f6d9e",
   "errorInfo": {
-    "errorType": "APP:PAYMENT_GATEWAY_ERROR",
-    "description": "Payment gateway timeout simulation"
-  }
+    "errorType": "INTERNAL_SERVER_ERROR",
+    "description": "HTTP POST on resource 'http://localhost:8081/mock-payment' failed: internal server error (500)."
+  },
+  "timestamp": "2026-11-04T12:55:08.9270546+01:00"
 }
 ```
+The mock gateway fails at random in about 1 request out of 5 (`randomInt(100) < 80` in the `mock-payment-gateway` flow). Repeat the request until you get a 500. Send each attempt without `Idempotency-Key`, or with a new one: a reused key returns the saved response instead of a new attempt.
 
 **Database Verification:**
 - `orders` table: status=FAILED (compensation applied)
@@ -257,8 +284,8 @@ Mock gateway randomly fails (20% rate). When failure occurs:
 
 ### GET /orders/{id} - Retrieve Success Order
 **Request:**
-GET http://localhost:{api.port}/orders/1
-*default port is 8081, see config.yaml*
+GET http://localhost:8081/orders/1
+
 
 **Response:**
 
@@ -284,8 +311,8 @@ Full order details including payment information
 
 ### GET /orders/{id} - Retrieve Failed Order
 **Request:**
-GET http://localhost:{api.port}/orders/2
-*default port is 8081, see config.yaml*
+GET http://localhost:8081/orders/2
+
 **Response:**
 
 ```json
@@ -310,14 +337,12 @@ Correctly shows failed order with no payment (compensation visible)
 
 ### GET /orders/{id} - Order Not Found
 **Request:**
-GET http://localhost:{api.port}/orders/999
-*default port is 8081, see config.yaml*
+GET http://localhost:8081/orders/999
+
 **Response 404:**
-json
-{
-  "error": "Order not found",
-  "order_id": null
-}
+```json
+{ "error": "Order not found", "order_id": "999" }
+```
 
 <img width="623" height="777" alt="Screenshot 2025-10-15 201809" src="https://github.com/user-attachments/assets/9d6795d2-54a4-4b64-a67f-4d06d5fa68d1" />
 
@@ -339,7 +364,7 @@ json
 
 ### Test 1: Successful Order Creation
 ```bash
-curl -X POST http://localhost:{api.port}/orders \
+curl -X POST http://localhost:8081/orders \
   -H "Content-Type: application/json" \
   -H "Idempotency-Key: unique-001" \
   -d '{"customer_id":"CUST001","amount":99.99}'
@@ -376,9 +401,9 @@ SELECT * FROM payments WHERE order_id IN (
 
 ### Test 4: Retrieve Order
 ```bash
-curl http://localhost:{api.port}/orders/1
+curl http://localhost:8081/orders/1
 ```
-*default port is 8081, see config.yaml*
+
 **Expected:** Full order details with payment information
 
 ### Test Results:
@@ -392,7 +417,7 @@ GET endpoint: returns full order details including payment status
 
 GET endpoint: handles failed orders (null payment) correctly
 
-GET endpoint: returns 404-like for non-existent orders
+GET endpoint: returns 404 for non-existent orders
 
 ## Implementation Patterns
 
