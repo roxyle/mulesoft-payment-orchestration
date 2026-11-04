@@ -124,23 +124,6 @@ curl -X POST http://localhost:8081/orders \
   -d '{"customer_id":"CUST001","amount":99.99}'
 ```
 
-
-or open in Postman or a browser: GET http://localhost:8081/test-db
-
-
-   you should receive:
-
-```
-   {
-    "status": "db connection successful",
-    "result": [
-        {
-            "test": 1,
-            "timestamp": "yyyy-mm-ddThh:mm:ss"
-        }
-    ]
-}
-```
 ## Authentication
 
 This is a local demo: the API does not require authentication and runs over plain HTTP (no TLS).
@@ -163,7 +146,7 @@ Method   | Endpoint        | Purpose                     | Status
 |---|---|---|
 | `status` | string | Always `failed` |
 | `order_id` | integer or null | ID of the order marked `FAILED`; `null` if the error occurs before the order is created |
-| `correlation_id` | string or null | UUID used to trace the request across logs |
+| `correlation_id` | string or null | UUID that links the response to the order record and the gateway call |
 | `errorInfo.errorType` | string | Mule error identifier, for example `INTERNAL_SERVER_ERROR` when the payment gateway returns 500; `UNKNOWN` if not available |
 | `errorInfo.description` | string | Error message from the failed step |
 | `timestamp` | string | ISO 8601 date and time with offset |
@@ -186,17 +169,17 @@ Method   | Endpoint        | Purpose                     | Status
 3. Update `config.yaml` with correct port (8889 or 3306)
 4. Restart application
 
-**Solution:** Ensure `save-idempotency-log` is called INSIDE Try block AFTER order confirmation
 
 ### Issue: "HTTP 404 on /mock-payment"
 **Cause:** Mock payment gateway flow not deployed
 
 **Solution:**
+
 1. Verify flow exists in XML (search for "mock-payment-gateway")
 2. Check console logs for deployment errors
-3. Restart application with Clean build
+3. In the console, look for `Message source 'listener' on flow 'mock-payment-gateway' successfully started`
+4. If it is missing: restart the application with a Clean build
 
-4. In the console, look for `Message source 'listener' on flow 'mock-payment-gateway' successfully started`. If it is missing: Clean + Restart
 
 ### Issue: "Idempotency not working"
 **Cause:** Header name mismatch or TTL expired
@@ -451,7 +434,7 @@ Check Idempotency:
 
 ### 3. Correlation IDs
 **Problem:** Distributed tracing across components  
-**Solution:** UUID propagated in all calls/logs
+**Solution:** UUID propagated to the gateway call, the database and the API responses
 
 Flow:
   1. Generate correlationId = uuid()
