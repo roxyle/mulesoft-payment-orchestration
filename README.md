@@ -186,9 +186,6 @@ Method   | Endpoint        | Purpose                     | Status
 3. Update `config.yaml` with correct port (8889 or 3306)
 4. Restart application
 
-### Issue: "Column 'order_id' cannot be null"
-**Cause:** Idempotency log trying to save before order creation
-
 **Solution:** Ensure `save-idempotency-log` is called INSIDE Try block AFTER order confirmation
 
 ### Issue: "HTTP 404 on /mock-payment"
