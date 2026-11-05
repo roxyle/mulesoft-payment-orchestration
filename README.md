@@ -1,27 +1,33 @@
 # Payment Orchestration System 
 
-**Ita**: Sistema di Gestione Pagamenti Enterprise con Pattern di Compensazione e Gestione dell'Idempotenza per transazioni distribuite.
+**Ita**: Sistema di gestione pagamenti con MuleSoft: compensazione dello stato su errore e gestione dell'idempotenza.
 
-**Eng**: Enterprise-grade Payment Processing System built with MuleSoft, implementing Compensation Patterns and Idempotency Handling for distributed transactions.
+**Eng**: Payment processing system built with MuleSoft, with state compensation on failure and idempotency handling.
+
+## Project status / Stato del progetto
+
+**Eng**: Learning project, working and tested locally. A revision is in progress to align it with enterprise MuleSoft conventions: per-environment configuration with secure properties, a RAML specification with APIkit, separate flows and more specific error handling. Current limitations are listed under Known limitations.
+
+**Ita**: Progetto formativo, funzionante e testato in locale. È in corso una revisione per allinearlo alle convenzioni enterprise MuleSoft: configurazione per ambiente con secure properties, specifica RAML con APIkit, flow separati e gestione degli errori più specifica. I limiti attuali sono elencati in Known limitations.
 
 ---
 **Not a developer? Start here!**
 
-**ITA**: Questo progetto dimostra la gestione affidabile di pagamenti in sistemi distribuiti,
-implementando tre pattern architetturali avanzati: compensazione automatica su errore,
+**ITA**: Questo progetto dimostra pattern per la gestione affidabile dei pagamenti in sistemi distribuiti,
+implementando tre pattern architetturali: compensazione automatica dello stato su errore,
 prevenzione di addebiti doppi e tracciabilità end-to-end.
 La demo simula il comportamento reale del sistema: puoi creare ordini, vedere le tabelle
-del database aggiornarsi in tempo reale, e provocare scenari di errore con rollback automatico.
+del database aggiornarsi in tempo reale, e provocare scenari di errore con compensazione dello stato.
 Il codice sorgente completo è qui sotto per chi vuole approfondire l'implementazione tecnica.
 
 Per vedere il sistema in azione senza installare nulla, usa la demo interattiva cliccando sul seguente link:
 **[▶ Apri la Demo Interattiva](https://mulesoft-payment-ui-demo.vercel.app/)**
 
-**ENG**: This project demonstrates reliable payment processing across distributed systems,
-implementing three advanced architectural patterns: automatic failure compensation,
+**ENG**: This project demonstrates patterns for reliable payment processing across distributed systems,
+implementing three architectural patterns: automatic state compensation on failure,
 duplicate charge prevention, and end-to-end traceability.
 The  demo simulates the real system behaviour: create orders, watch database tables update
-in real time, and trigger failure scenarios with automatic rollback.
+in real time, and trigger failure scenarios with state compensation.
 The full source code is below for those who want to explore the technical implementation.
 
 To see the system in action without installing anything, use the interactive demo:
@@ -38,12 +44,12 @@ To see the system in action without installing anything, use the interactive dem
 ## Solution
 
 **Ita**: 3 pattern testati
-- **Compensation Logic**: Rollback automatico su transazioni parziali
+- **Compensation Logic**: in caso di errore l'ordine viene segnato come FAILED (compensazione dello stato)
 - **Idempotency**: Gestione sicura di retry, prevenzione di duplicati
 - **Correlation IDs**: Tracciamento end-to-end
 
 **Eng**: 3 tested patterns
-- **Compensation Logic**: Automatic rollback of partial transactions
+- **Compensation Logic**: on failure the order is marked FAILED (state compensation)
 - **Idempotency**: Safe retry handling, preventing duplicates
 - **Correlation IDs**: End-to-end traceability
 
@@ -68,7 +74,7 @@ To see the system in action without installing anything, use the interactive dem
 ## Tech Stack
 - **Integration**: Mule Runtime 4.9.9 EE (Anypoint Studio 7.21)
 - **Database**: MySQL 5.7 (bundled with MAMP, tested on 5.7.24)
-- **Patterns**: Saga/Compensation, Idempotency, Correlation IDs
+- **Patterns**: State compensation, Idempotency, Correlation IDs
 - **API Design**: REST, JSON
 
 ### Prerequisites
@@ -258,7 +264,7 @@ The mock gateway fails at random in about 1 request out of 5 (`randomInt(100) < 
 
 **Database Verification:**
 - `orders` table: status=FAILED (compensation applied)
-- `payments` table: NO record for this order_id (rollback)
+- `payments` table: NO record for this order_id (payment not written)
 - `idempotency_log` table: NO record (errors not cached)
 
 
@@ -405,8 +411,10 @@ GET endpoint: returns 404 for non-existent orders
 
 ## Implementation Patterns
 
-### 1. Compensation Pattern (Saga)
+### 1. Compensation Pattern (state compensation)
+
 **Problem:** Distributed transactions without 2PC  
+
 **Solution:** Manual compensation on failure
 
 Try:
@@ -418,8 +426,10 @@ Try:
 On Error:
   - COMPENSATE: Update Order (status=FAILED)
   - Prevents orphaned PENDING orders
-  - No payment record created (logical rollback)
+  - No payment record created
 
+
+**Note:** this is state compensation, not a full Saga. If the payment succeeds and a later step fails, no refund is issued.
 
 ### 2. Idempotency Handling
 **Problem:** Network retries causing duplicate charges  
@@ -444,7 +454,7 @@ Flow:
 
 Benefit: link a single request across the API response, the database and the gateway call
 
-## Project Status
+## Development checklist
 
  - [x] Database schema
 
@@ -474,10 +484,17 @@ Benefit: link a single request across the API response, the database and the gat
 
  - [x] Deployed interface
 
+## Known limitations
+- Compensation updates the order state only; there is no refund call.
+- The idempotency check is not atomic: two concurrent requests with the same key can both pass, because the key is stored only after success.
+- Single application: no API-led layers (experience, process, system).
+- Errors raised by the mock gateway reach the caller as HTTP errors and are handled by a generic handler.
+- Database credentials are in plain configuration (local setup only).
+
 ### About me
 
 Author: Ylenia Rossi 
 Purpose: portfolio project showcasing MuleSoft integration patterns
 Portfolio: https://portfolio-ylenia-ten.vercel.app/
-Status: complete. The UI demo is deployed on Vercel; the Mule API runs locally.
+Status: Work in Progress. The UI demo is deployed on Vercel; the Mule API runs locally.
 
